@@ -1,0 +1,15 @@
+# Force GitHub Linguist to count Jupyter notebooks as Python
+*.ipynb linguist-language=Python
+
+# Ignore large binary/model files from language stats
+*.pt linguist-generated=true
+*.pkl linguist-generated=true
+*.h5 linguist-generated=true
+*.csv linguist-generated=true
+*.png linguist-generated=true
+*.jpg linguist-generated=true
+*.jpeg linguist-generated=true
+*.dcm linguist-generated=true
+*.zip linguist-generated=true
+*.tar.gz linguist-generated=true
+*.model linguist-generated=true
