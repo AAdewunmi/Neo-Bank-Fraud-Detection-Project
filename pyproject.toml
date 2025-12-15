@@ -1,0 +1,23 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "neobank_site.settings"
+python_files = "test_*.py"
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["ml", "dashboard"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(\.
+venv
+|build
+|dist
+)/
+'''
