@@ -1,0 +1,85 @@
+Path: `.gitignore`
+
+```gitignore
+# -----------------------------------------------------------------------------
+# Python / virtualenv
+# -----------------------------------------------------------------------------
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# -----------------------------------------------------------------------------
+# OS / editor
+# -----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# -----------------------------------------------------------------------------
+# Secrets / env
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# -----------------------------------------------------------------------------
+# Django
+# -----------------------------------------------------------------------------
+db.sqlite3
+db.sqlite3-journal
+*.log
+staticfiles/
+media/
+
+# -----------------------------------------------------------------------------
+# Training outputs / artefacts (generated)
+# -----------------------------------------------------------------------------
+artefacts/
+*.joblib
+*.pkl
+*.pickle
+
+# -----------------------------------------------------------------------------
+# Local datasets (keep only the tiny sample under version control)
+# -----------------------------------------------------------------------------
+data/*
+!data/sample_transactions.csv
+!data/.gitkeep
+
+# If you ever add dataset folders, keep them ignored by default
+**/datasets/
+**/raw_data/
+**/real_data/
+**/*paysim*
+**/*creditcard*
+**/*fraud*
+
+# -----------------------------------------------------------------------------
+# Notebooks (optional)
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# -----------------------------------------------------------------------------
+# Docker local volumes (if you bind-mount named dirs)
+# -----------------------------------------------------------------------------
+pgdata/
+postgres-data/
+```
+
+If you want `data/` to never be empty (even if you remove the sample later), add a `data/.gitkeep` file (the ignore rules above already allow it).
