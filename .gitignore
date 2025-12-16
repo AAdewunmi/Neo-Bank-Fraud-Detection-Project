@@ -62,13 +62,12 @@ data/*
 !data/.gitkeep
 
 # If you ever add dataset folders, keep them ignored by default
-**/datasets/
-**/raw_data/
-**/real_data/
-**/*paysim*
-**/*creditcard*
-**/*fraud*
-
+data/**/datasets/
+data/**/raw_data/
+data/**/real_data/
+data/**/*paysim*
+data/**/*creditcard*
+data/**/*fraud*
 # -----------------------------------------------------------------------------
 # Notebooks (optional)
 # -----------------------------------------------------------------------------
