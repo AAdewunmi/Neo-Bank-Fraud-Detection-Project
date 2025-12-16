@@ -25,3 +25,19 @@ def schema_hash(columns: Iterable[str]) -> str:
     """
     joined = "|".join(columns)
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:12]
+
+
+def load_registry(path: str | Path) -> Dict[str, Any]:
+    """
+    Load the model registry JSON, returning a default structure if missing.
+
+    Args:
+        path: Path to model_registry.json.
+
+    Returns:
+        Registry dictionary.
+    """
+    p = Path(path)
+    if not p.exists():
+        return {"categorisation": {}, "fraud": {}}
+    return json.loads(p.read_text(encoding="utf-8"))
