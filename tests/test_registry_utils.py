@@ -7,8 +7,6 @@ Intent:
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 from ml.training.utils import load_registry, save_registry
 
 
