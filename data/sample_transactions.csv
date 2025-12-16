@@ -1,7 +1,14 @@
 timestamp,amount,customer_id,merchant,description,category
 2024-01-01T12:00:00Z,3.50,c001,Coffee Co,flat white,Food & Drink
 2024-01-01T14:32:00Z,52.00,c002,Grocer Ltd,weekly groceries,Groceries
+2024-01-01T19:10:00Z,5.10,c001,Coffee Co,iced latte,Food & Drink
 2024-01-02T09:15:00Z,12.99,c001,Streamr Inc,monthly subscription,Subscriptions
+2024-01-02T12:40:00Z,8.99,c002,Streamr Inc,video streaming plan,Subscriptions
 2024-01-02T21:12:00Z,499.00,c003,Weird Merchant,high-value item,Other
 2024-01-03T08:00:00Z,2.85,c001,Coffee Co,americano,Food & Drink
+2024-01-03T10:22:00Z,34.75,c003,Grocer Ltd,supermarket groceries,Groceries
 2024-01-03T18:05:00Z,18.20,c004,Transit,city travel,Transport
+2024-01-04T08:35:00Z,2.40,c004,Transit,bus fare,Transport
+2024-01-04T14:05:00Z,250.00,c005,Weird Merchant,online purchase,Other
+2024-01-04T19:30:00Z,61.10,c002,Grocer Ltd,weekly shop,Groceries
+
