@@ -41,3 +41,17 @@ def load_registry(path: str | Path) -> Dict[str, Any]:
     if not p.exists():
         return {"categorisation": {}, "fraud": {}}
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+def save_registry(registry: Dict[str, Any], path: str | Path) -> None:
+    """
+    Save registry JSON deterministically (sorted keys, stable formatting).
+
+    Args:
+        registry: Registry dictionary to persist.
+        path: Destination path.
+    """
+    Path(path).write_text(
+        json.dumps(registry, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
