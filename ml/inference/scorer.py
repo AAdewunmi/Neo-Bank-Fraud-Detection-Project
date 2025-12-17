@@ -34,26 +34,26 @@ class Scorer:
         self._registry = json.loads(Path(registry_path).read_text(encoding="utf-8"))
         self._cache: Dict[str, Any] = {}
 
-    # def _load(self, task: str, version: str | None) -> Any:
-    #     """
-    #     Load a model artefact for a task/version from registry.
+    def _load(self, task: str, version: str | None) -> Any:
+        """
+        Load a model artefact for a task/version from registry.
 
-    #     Args:
-    #         task: "categorisation" or "fraud"
-    #         version: specific version or None for latest
+        Args:
+            task: "categorisation" or "fraud"
+            version: specific version or None for latest
 
-    #     Returns:
-    #         Loaded model object.
-    #     """
-    #     resolved = version or self._registry[task]["latest"]
-    #     cache_key = f"{task}:{resolved}"
-    #     if cache_key in self._cache:
-    #         return self._cache[cache_key]
+        Returns:
+            Loaded model object.
+        """
+        resolved = version or self._registry[task]["latest"]
+        cache_key = f"{task}:{resolved}"
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
-    #     artefact_path = self._registry[task][resolved]["artefact"]
-    #     model = load(artefact_path)
-    #     self._cache[cache_key] = model
-    #     return model
+        artefact_path = self._registry[task][resolved]["artefact"]
+        model = load(artefact_path)
+        self._cache[cache_key] = model
+        return model
 
     # def score(self, df: pd.DataFrame, threshold: float = 0.65) -> Tuple[pd.DataFrame,
     #                                                                     Dict[str, Any]]:
