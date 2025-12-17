@@ -20,5 +20,17 @@
     },
     "latest": "cat_lr_20251216131937"
   },
-  "fraud": {}
+  "fraud": {
+    "fraud_if_20251217150855": {
+      "artefact": "artefacts/fraud_if_20251217150855.joblib",
+      "features": [
+        "amount"
+      ],
+      "metrics": {
+        "note": "unsupervised baseline; validate via threshold tests"
+      },
+      "schema_hash": "cf38d95c9c6b"
+    },
+    "latest": "fraud_if_20251217150855"
+  }
 }
