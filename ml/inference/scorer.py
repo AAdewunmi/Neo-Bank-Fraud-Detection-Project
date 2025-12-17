@@ -55,60 +55,60 @@ class Scorer:
         self._cache[cache_key] = model
         return model
 
-    # def score(self, df: pd.DataFrame, threshold: float = 0.65) -> Tuple[pd.DataFrame,
-    #                                                                     Dict[str, Any]]:
-    #     """
-    #     Score a dataframe and return outputs + diagnostics.
+    def score(self, df: pd.DataFrame, threshold: float = 0.65) -> Tuple[pd.DataFrame,
+                                                                        Dict[str, Any]]:
+        """
+        Score a dataframe and return outputs + diagnostics.
 
-    #     Required input columns:
-    #       - timestamp, amount, customer_id, merchant, description
+        Required input columns:
+          - timestamp, amount, customer_id, merchant, description
 
-    #     Args:
-    #         df: Input transactions dataframe.
-    #         threshold: Fraud flag threshold in [0, 1] (higher -> fewer flags).
+        Args:
+            df: Input transactions dataframe.
+            threshold: Fraud flag threshold in [0, 1] (higher -> fewer flags).
 
-    #     Returns:
-    #         (scored_df, diagnostics) where scored_df includes:
-    #           category, category_confidence, fraud_risk, flagged
-    #     """
-    #     cat_version = self._registry["categorisation"]["latest"]
-    #     frd_version = self._registry["fraud"]["latest"]
+        Returns:
+            (scored_df, diagnostics) where scored_df includes:
+              category, category_confidence, fraud_risk, flagged
+        """
+        cat_version = self._registry["categorisation"]["latest"]
+        frd_version = self._registry["fraud"]["latest"]
 
-    #     cat_model = self._load("categorisation", cat_version)
-    #     frd_model = self._load("fraud", frd_version)
+        cat_model = self._load("categorisation", cat_version)
+        frd_model = self._load("fraud", frd_version)
 
-    #     text_cols = self._registry["categorisation"][cat_version]["text_cols"]
-    #     text = df[text_cols].astype(str).agg(" ".join, axis=1)
+        text_cols = self._registry["categorisation"][cat_version]["text_cols"]
+        text = df[text_cols].astype(str).agg(" ".join, axis=1)
 
-    #     categories = cat_model.predict(text)
+        categories = cat_model.predict(text)
 
-    #     if hasattr(cat_model, "predict_proba"):
-    #         confidence = cat_model.predict_proba(text).max(axis=1)
-    #     else:
-    #         # Baseline fallback: if no probabilities, treat as confident.
-    #         confidence = np.ones(len(df), dtype=float)
+        if hasattr(cat_model, "predict_proba"):
+            confidence = cat_model.predict_proba(text).max(axis=1)
+        else:
+            # Baseline fallback: if no probabilities, treat as confident.
+            confidence = np.ones(len(df), dtype=float)
 
-    #     # IsolationForest: decision_function higher = more normal.
-    #     # Convert to risk where higher = more anomalous.
-    #     amt = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0).to_frame()
-    #     raw = frd_model.decision_function(amt)
+        # IsolationForest: decision_function higher = more normal.
+        # Convert to risk where higher = more anomalous.
+        amt = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0).to_frame()
+        raw = frd_model.decision_function(amt)
 
-    #     raw_max = float(np.max(raw))
-    #     raw_min = float(np.min(raw))
-    #     denom = (raw_max - raw_min) + 1e-9
-    #     risk = (raw_max - raw) / denom
+        raw_max = float(np.max(raw))
+        raw_min = float(np.min(raw))
+        denom = (raw_max - raw_min) + 1e-9
+        risk = (raw_max - raw) / denom
 
-    #     flagged = risk >= threshold
+        flagged = risk >= threshold
 
-    #     out = df.copy()
-    #     out["category"] = categories
-    #     out["category_confidence"] = confidence
-    #     out["fraud_risk"] = np.round(risk, 4)
-    #     out["flagged"] = flagged
+        out = df.copy()
+        out["category"] = categories
+        out["category_confidence"] = confidence
+        out["fraud_risk"] = np.round(risk, 4)
+        out["flagged"] = flagged
 
-    #     diagnostics = {
-    #         "n": int(len(df)),
-    #         "threshold": float(threshold),
-    #         "pct_flagged": float(np.mean(flagged)) if len(df) else 0.0,
-    #     }
-    #     return out, diagnostics
+        diagnostics = {
+            "n": int(len(df)),
+            "threshold": float(threshold),
+            "pct_flagged": float(np.mean(flagged)) if len(df) else 0.0,
+        }
+        return out, diagnostics
