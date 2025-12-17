@@ -2,14 +2,11 @@
 Train an unsupervised fraud baseline (Isolation Forest) on numeric features.
 
 Usage:
-  python -m ml.training.train_fraud_baseline \
+  source .venv/bin/activate
+  python ml/training/train_fraud_baseline.py \
     --input data/sample_transactions.csv \
     --amount_col amount \
     --registry model_registry.json
-
-Output:
-- artefacts/fraud_if_<timestamp>.joblib
-- model_registry.json updated (fraud.latest -> version)
 """
 from __future__ import annotations
 
@@ -34,7 +31,7 @@ def main(args: argparse.Namespace) -> None:
     if args.amount_col not in df.columns:
         raise ValueError(f"Missing amount column: {args.amount_col}")
 
-    # Defensive numeric coercion; Week 1 is about not crashing on messy inputs.
+    # Coerce amount defensively; Week 1 is about not crashing.
     X = pd.to_numeric(df[args.amount_col], errors="coerce").fillna(0.0).to_frame()
 
     model = IsolationForest(
