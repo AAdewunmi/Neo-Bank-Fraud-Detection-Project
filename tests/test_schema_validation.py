@@ -20,16 +20,16 @@ def test_read_csv_missing_columns_raises() -> None:
     assert "Missing required columns" in str(exc.value)
 
 
-# def test_read_csv_amount_coercion_invalid_to_zero() -> None:
-#     """
-#     Invalid numeric values must coerce to 0.0.
-#     """
-#     csv = (
-#         "timestamp,amount,customer_id,merchant,description\n"
-#         "2024-01-01T00:00:00Z,notanumber,c1,m1,d1\n"
-#     )
-#     df = read_csv(io.BytesIO(csv.encode("utf-8")))
-#     assert df.loc[0, "amount"] == 0.0
+def test_read_csv_amount_coercion_invalid_to_zero() -> None:
+    """
+    Invalid numeric values must coerce to 0.0.
+    """
+    csv = (
+        "timestamp,amount,customer_id,merchant,description\n"
+        "2024-01-01T00:00:00Z,notanumber,c1,m1,d1\n"
+    )
+    df = read_csv(io.BytesIO(csv.encode("utf-8")))
+    assert df.loc[0, "amount"] == 0.0
 
 
 # def test_read_csv_empty_customer_id_rejected() -> None:
