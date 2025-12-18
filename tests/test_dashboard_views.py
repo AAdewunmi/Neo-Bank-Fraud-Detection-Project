@@ -51,12 +51,12 @@ def test_dashboard_post_valid_csv_renders_table(monkeypatch, client) -> None:
     assert b"KPIs" in resp.content
 
 
-# @pytest.mark.django_db
-# def test_dashboard_post_missing_columns_shows_error(client) -> None:
-#     bad_csv = b"foo,bar\n1,2\n"
-#     upload = SimpleUploadedFile("bad.csv", bad_csv, content_type="text/csv")
+@pytest.mark.django_db
+def test_dashboard_post_missing_columns_shows_error(client) -> None:
+    bad_csv = b"foo,bar\n1,2\n"
+    upload = SimpleUploadedFile("bad.csv", bad_csv, content_type="text/csv")
 
-#     resp = client.post(reverse("dashboard"), data={"threshold": 0.65, "csv_file": upload})
+    resp = client.post(reverse("dashboard"), data={"threshold": 0.65, "csv_file": upload})
 
-#     assert resp.status_code == 200
-#     assert b"Missing required columns" in resp.content
+    assert resp.status_code == 200
+    assert b"Missing required columns" in resp.content
