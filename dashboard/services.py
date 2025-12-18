@@ -15,7 +15,6 @@ import pandas as pd
 
 from ml.inference.scorer import Scorer
 
-
 REQUIRED_COLUMNS: List[str] = ["timestamp", "amount", "customer_id", "merchant", "description"]
 
 
@@ -63,4 +62,23 @@ def score_df(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str
         Tuple of (scored dataframe, diagnostics dict).
     """
     scorer = Scorer()
-    return scorer.score(df, threshold=threshold)
+    scored_df, diags = scorer.score(df, threshold=threshold)
+
+    # Normalise baseline diagnostics keys so the view relies on a stable contract.
+    diags["n"] = int(diags.get("n", len(scored_df)))
+    diags["threshold"] = float(diags.get("threshold", threshold))
+    diags["pct_flagged"] = float(diags.get("pct_flagged", 0.0))
+
+    # Week 1 definition: "auto categorised" means category is present and non-empty.
+    # If categorisation isn't wired yet, this will cleanly report 0.0.
+    pct_auto_categorised = 0.0
+    if "category" in scored_df.columns:
+        cat = scored_df["category"].fillna("").astype(str)
+        pct_auto_categorised = float((cat.str.len() > 0).mean())
+
+    diags["pct_auto_categorised"] = float(diags.get("pct_auto_categorised", pct_auto_categorised))
+
+    # Guaranteed console visibility.
+    print(f"[LedgerGuard] score_df diagnostics: {diags}", flush=True)
+
+    return scored_df, diags
