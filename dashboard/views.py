@@ -1,22 +1,55 @@
 """
-Views for the Week 1 dashboard scaffold.
+Views for the dashboard app.
 
-Week 1 goal: prove request routing + template rendering + test harness.
+Week 1 intent:
+- render an upload form
+- validate CSV via the ingestion contract
+- run scoring and render a simple table with KPIs
 """
 from __future__ import annotations
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
+from .forms import UploadForm
+from .services import read_csv, score_df
+
 
 def index(request: HttpRequest) -> HttpResponse:
     """
-    Render a placeholder page for Week 1 scaffolding.
+    Render the dashboard. On POST, validate the CSV, score it, and render results.
 
     Args:
         request: Django request object.
 
     Returns:
-        An HTTP response containing the rendered template.
+        HTML response.
     """
-    return render(request, "dashboard/index.html")
+    context = {"form": UploadForm()}
+
+    if request.method == "POST":
+        form = UploadForm(request.POST, request.FILES)
+        context["form"] = form
+
+        if form.is_valid():
+            try:
+                df = read_csv(request.FILES["csv_file"])
+                scored, diags = score_df(df, threshold=form.cleaned_data["threshold"])
+
+                context.update(
+                    {
+                        "kpi": {
+                            "tx_count": int(len(scored)),
+                            "pct_flagged": f"{diags['pct_flagged'] * 100:.1f}%",
+                            "pct_auto_cat": f"{diags['pct_auto_categorised'] * 100:.1f}%",
+                        },
+                        "table": scored.to_dict(orient="records"),
+                        "threshold": float(diags["threshold"]),
+                    }
+                )
+            except Exception as exc:
+                context["error"] = str(exc)
+        else:
+            context["error"] = "Invalid form input."
+
+    return render(request, "dashboard/index.html", context)
