@@ -1,10 +1,14 @@
 """
 Views for the dashboard app.
+dashboard/views.py
 
 Week 1 intent:
 - render an upload form
 - validate CSV via the ingestion contract
 - run scoring and render a simple table with KPIs
+
+Note:
+- importing the services module (not individual functions) makes tests easier to patch.
 """
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from .forms import UploadForm
-from .services import read_csv, score_df
+from . import services
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -33,8 +37,8 @@ def index(request: HttpRequest) -> HttpResponse:
 
         if form.is_valid():
             try:
-                df = read_csv(request.FILES["csv_file"])
-                scored, diags = score_df(df, threshold=form.cleaned_data["threshold"])
+                df = services.read_csv(request.FILES["csv_file"])
+                scored, diags = services.score_df(df, threshold=form.cleaned_data["threshold"])
 
                 context.update(
                     {

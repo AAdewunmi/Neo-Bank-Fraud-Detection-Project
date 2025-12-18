@@ -1,30 +1,27 @@
 """
 Integration-style tests for dashboard views.
+tests/test_dashboard_views.py
 
 Week 1 intent:
 - GET renders successfully
 - POST with valid CSV renders KPIs and a table
 - POST with invalid CSV shows a readable error
+
+These tests do not require database access.
 """
 from __future__ import annotations
 
-import io
-
-import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 
-@pytest.mark.django_db
 def test_dashboard_get_renders(client) -> None:
     resp = client.get(reverse("dashboard"))
     assert resp.status_code == 200
-    assert b"Upload and Controls" in resp.content
+    assert b"LedgerGuard" in resp.content
 
 
-@pytest.mark.django_db
 def test_dashboard_post_valid_csv_renders_table(monkeypatch, client) -> None:
-    # Avoid depending on real trained artefacts in a view test.
     def fake_score_df(df, threshold):
         df = df.copy()
         df["category"] = "Test"
@@ -47,11 +44,10 @@ def test_dashboard_post_valid_csv_renders_table(monkeypatch, client) -> None:
     resp = client.post(reverse("dashboard"), data={"threshold": 0.65, "csv_file": upload})
 
     assert resp.status_code == 200
-    assert b"Transactions" in resp.content
     assert b"KPIs" in resp.content
+    assert b"Transactions" in resp.content
 
 
-@pytest.mark.django_db
 def test_dashboard_post_missing_columns_shows_error(client) -> None:
     bad_csv = b"foo,bar\n1,2\n"
     upload = SimpleUploadedFile("bad.csv", bad_csv, content_type="text/csv")

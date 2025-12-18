@@ -1,5 +1,6 @@
 """
-Smoke tests for the Django scaffold.
+Smoke tests for dashboard routing.
+tests/test_dashboard_smoke.py
 """
 from __future__ import annotations
 
@@ -12,4 +13,4 @@ def test_index_smoke(client) -> None:
     """
     resp = client.get(reverse("dashboard"))
     assert resp.status_code == 200
-    assert b"Week 1: scaffolding" in resp.content
+    assert b"LedgerGuard" in resp.content
