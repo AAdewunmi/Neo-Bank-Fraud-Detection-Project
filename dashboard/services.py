@@ -4,13 +4,16 @@ Dashboard services for Week 1.
 Week 1 intent:
 - enforce the data contract at ingestion time
 - return dataframes that downstream scoring can rely on
+- keep view logic thin and predictable
 """
 from __future__ import annotations
 
 import io
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
+
+from ml.inference.scorer import Scorer
 
 
 REQUIRED_COLUMNS: List[str] = ["timestamp", "amount", "customer_id", "merchant", "description"]
@@ -36,16 +39,28 @@ def read_csv(file_obj) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
-    # Coerce amount defensively to avoid runtime failures downstream.
     df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
 
-    # merchant/description may be null; default to empty strings.
     df["merchant"] = df["merchant"].fillna("").astype(str)
     df["description"] = df["description"].fillna("").astype(str)
 
-    # customer_id is required and must not be empty after coercion.
     df["customer_id"] = df["customer_id"].fillna("").astype(str)
     if (df["customer_id"].str.len() == 0).any():
         raise ValueError("customer_id must be non-empty for all rows")
 
     return df
+
+
+def score_df(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """
+    Score a DataFrame using the shared ML scorer.
+
+    Args:
+        df: Validated input DataFrame.
+        threshold: Fraud threshold in [0.0, 1.0].
+
+    Returns:
+        Tuple of (scored dataframe, diagnostics dict).
+    """
+    scorer = Scorer()
+    return scorer.score(df, threshold=threshold)
