@@ -32,14 +32,14 @@ def test_read_csv_amount_coercion_invalid_to_zero() -> None:
     assert df.loc[0, "amount"] == 0.0
 
 
-# def test_read_csv_empty_customer_id_rejected() -> None:
-#     """
-#     customer_id is required and must not be empty.
-#     """
-#     csv = (
-#         "timestamp,amount,customer_id,merchant,description\n"
-#         "2024-01-01T00:00:00Z,10.0,,m1,d1\n"
-#     )
-#     with pytest.raises(ValueError) as exc:
-#         read_csv(io.BytesIO(csv.encode("utf-8")))
-#     assert "customer_id must be non-empty" in str(exc.value)
+def test_read_csv_empty_customer_id_rejected() -> None:
+    """
+    customer_id is required and must not be empty.
+    """
+    csv = (
+        "timestamp,amount,customer_id,merchant,description\n"
+        "2024-01-01T00:00:00Z,10.0,,m1,d1\n"
+    )
+    with pytest.raises(ValueError) as exc:
+        read_csv(io.BytesIO(csv.encode("utf-8")))
+    assert "customer_id must be non-empty" in str(exc.value)
