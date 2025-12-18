@@ -1,0 +1,45 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span>Transactions</span>
+    <span class="badge bg-secondary">Threshold: {{ threshold }}</span>
+  </div>
+
+  <div class="card-body table-responsive">
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Customer</th>
+          <th>Merchant</th>
+          <th>Description</th>
+          <th class="text-end">Amount</th>
+          <th>Category</th>
+          <th>Confidence</th>
+          <th>Risk</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in table %}
+        <tr>
+          <td>{{ r.timestamp }}</td>
+          <td>{{ r.customer_id }}</td>
+          <td>{{ r.merchant }}</td>
+          <td>{{ r.description|truncatechars:60 }}</td>
+          <td class="text-end">{{ r.amount }}</td>
+          <td>{{ r.category }}</td>
+          <td>{{ r.category_confidence }}</td>
+          <td>{{ r.fraud_risk }}</td>
+          <td>
+            {% if r.flagged %}
+              <span class="badge bg-danger">Flagged</span>
+            {% else %}
+              <span class="badge bg-success">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

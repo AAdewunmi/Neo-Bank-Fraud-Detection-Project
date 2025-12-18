@@ -1,6 +1,48 @@
 {% extends "dashboard/base.html" %}
+{% load static %}
+
 {% block content %}
-<div class="alert alert-info">
-  Week 1: scaffolding + data contract + baselines. Upload and scoring arrive later this week.
+<div class="row">
+  <aside class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Upload and Controls</div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">CSV File</label>
+            {{ form.csv_file }}
+            <div class="form-text">Required: timestamp, amount, customer_id, merchant, description</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Fraud Threshold</label>
+            {{ form.threshold }}
+            <div class="form-text">Higher values flag fewer transactions.</div>
+          </div>
+
+          <button class="btn btn-primary w-100" type="submit">Validate and Score</button>
+        </form>
+
+        {% if error %}
+          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% include "dashboard/_model_insights.html" %}
+  </aside>
+
+  <section class="col-md-8">
+    {% if table %}
+      {% include "dashboard/_kpis.html" %}
+      {% include "dashboard/_transactions_table.html" %}
+    {% else %}
+      <div class="alert alert-info">
+        Upload a CSV to validate the schema and run scoring.
+      </div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}
+
