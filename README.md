@@ -1,73 +1,180 @@
-# 💳 FinSight: Neo-Bank Transaction Categorisation & Fraud Risk Dashboard
+[![CI](https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project/actions/workflows/ci.yml/badge.svg)](https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-80%25%20min-brightgreen)](https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project/actions)
+[![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/django-5.x-darkgreen)](https://www.djangoproject.com/)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED)](https://www.docker.com/)
+[![Docker Compose](https://img.shields.io/badge/docker%20compose-supported-2496ED)](https://docs.docker.com/compose/)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**Duration:** 4 Weeks (20 Lab Days, Mon–Fri)
-**Format:** Hands-on postgraduate programming lab
-**Focus:** NLP for Categorisation • Fraud Modelling • Django Dashboards • CI/CD • Risk Communication
 
----
+```markdown
+# LedgerGuard (Neo-Bank Fraud Detection Project)
 
-## 🎯 Course Overview
+LedgerGuard is a portfolio-grade, production-minded fraud and transaction categorisation prototype for a neo-bank setting. Week 1 focuses on correctness, repeatability, and clean interfaces: deterministic baselines, schema-validated ingestion, and a small dashboard that exercises the full flow end to end.
 
-Neo-banks need reliable spend categorisation and low-friction fraud detection to inform customers and protect revenue. This lab guides you through building **FinSight** — an end-to-end pipeline that auto-labels merchant transactions and assigns a fraud risk score, surfaced in a Django + Bootstrap review dashboard with exportable workflows and threshold analysis.
-
-You’ll progress from a strict data contract and deterministic baselines to embedding-based classifiers, supervised fraud models, model insights (PR curves), and a deployed, reviewer-friendly tool with rules overlays and a feedback loop.
-
----
-
-## 📆 Weekly Structure
-
-| Week                             | Theme                                                       | Core Skills                                                                                         | Key Deliverables                                                                                                  |
-| -------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **1 — Reproducible Foundations** | Data contract, baselines, tests, CI                         | Schema design • TF-IDF+LR • Isolation Forest • pytest • coverage • GitHub Actions                   | `docs/data_contract.md`, `train_categorisation.py`, `train_fraud_baseline.py`, `model_registry.json`, CI badge    |
-| **2 — Django MVP Dashboard**     | Upload → score → filter → export                            | Django forms/views/templates • Bootstrap UI • server-side filtering • UX & error states             | `dashboard/` MVP, KPIs, flag export, screenshots, `tests/test_dashboard_*.py`, tag `v0.2`                         |
-| **3 — Signal Uplift & Insights** | Embeddings + LightGBM; supervised fraud; PR/threshold plots | Sentence-Transformers (MiniLM) • LightGBM • XGBoost • PR-AUC • Matplotlib insights • feature parity | `train_categorisation_embeddings.py`, `train_fraud_supervised.py`, PNG plots, feature parity tests, model cards   |
-| **4 — Feedback, Rules & Deploy** | Edit loop, rules overlay, container deploy, perf polish     | Human-in-the-loop design • Rules precedence • Gunicorn/Docker • Healthcheck • Perf instrumentation  | Inline edits + `feedback_edits.csv`, `rules/category_overrides.json`, `/health`, live URL, postmortem, tag `v1.0` |
+Status: Work in progress (Week 1). This README will be revised as new weeks add persistence, monitoring, and deployment.
 
 ---
 
-## 🧪 Learning Outcomes
+## What exists in Week 1
 
-By completing FinSight, you will be able to:
+### Capabilities
+- Transaction categorisation baseline (TF IDF with Logistic Regression)
+- Fraud risk baseline (Isolation Forest)
+- Unified scorer interface (one entry point that returns category, confidence, fraud risk, and flagged status)
+- CSV ingestion with schema validation and coercion rules
+- Minimal Django dashboard to upload a CSV and view KPIs and a scored table
+- Test suite with coverage gate in CI
 
-1. **Engineer reproducible ML pipelines** with deterministic text vectorisers, persisted artefacts, and a model registry.
-2. **Build categorisers and fraud detectors** (TF-IDF+LR → MiniLM+LightGBM; Isolation Forest → XGBoost) with imbalance handling.
-3. **Evaluate trade-offs** using PR-AUC and threshold vs precision/recall to inform business policy.
-4. **Develop a reviewer-ready Django dashboard** with upload, filtering, confidence cues, and CSV exports.
-5. **Operationalise responsibly** with CI, tests, containerised deploys, model cards, and a concise **Risk Memo**.
-
----
-
-## 📚 Assessment & Artifacts
-
-* ✅ **Source with tests** (pytest/pytest-django, coverage ≥ 80%, CI passing)
-* ✅ **Model artefacts + registry** (`artefacts/*.joblib`, `model_registry.json`, model cards)
-* ✅ **Deployed dashboard** (cloud URL + `/health`) with screenshots/GIF
-* ✅ **Insights pack** (PR curve, threshold trade-offs) and **Risk Memo** (`docs/risk_memo.md`)
-* ✅ **Reflective posts** (weekly LinkedIn/Medium summaries)
+### Design goals (Week 1)
+- Deterministic, reproducible runs where possible (stable tests and diffs in CI)
+- Explicit input and output contracts between ingestion, scoring, and UI
+- Fail fast, fail informative for bad CSV uploads
 
 ---
 
-## ✍️ Reflective Practice
-
-Weekly short reflections to consolidate technical and communication skills:
-
-* *Week 1 – “Data Contracts & Determinism: Making ML Reproducible”*
-* *Week 2 – “From Pipeline to People: Shipping a Useful MVP”*
-* *Week 3 – “Signal, Not Hype: Embeddings, PR-AUC, and Parity”*
-* *Week 4 – “Rules, Feedback, and the Path to Production”*
+## Tech stack (Week 1)
+- Python 3.11
+- Django 5.x
+- pandas, scikit-learn
+- pytest, pytest-django, coverage
+- Docker, Docker Compose (for container workflow)
 
 ---
 
-## 🧩 Tools & Stack
-
-**Languages:** Python 3.11 • HTML/CSS/JS (Bootstrap)
-**Libraries:** Django, pandas, scikit-learn, sentence-transformers (MiniLM), LightGBM, XGBoost, imbalanced-learn, Matplotlib, pytest/pytest-django, factory_boy
-**Infrastructure:** GitHub Actions, Docker, Gunicorn, Render/Railway (cloud)
-**Data:** Kaggle PaySim / Credit Card Fraud (labels optional) + synthetic merchant descriptions
+## Repository layout (high level)
+- `dashboard/` Django app for upload, ingestion services, and rendering results
+- `ml/` training and inference code (baselines, scorer, utilities)
+- `tests/` unit and integration-style tests
+- `docs/` contracts and operational notes (grows over time)
+- `data/` local sample datasets (not committed if large or sensitive)
 
 ---
 
-## 💬 Final Deliverable
+## Data contract (Week 1)
 
-A reproducible, deployed **Neo-bank categorisation & fraud risk dashboard** with transparent model insights, rules overlays, and a feedback export — ready for portfolio review, recruiter demos, or capstone assessment.
+Expected CSV columns:
+- `timestamp`
+- `amount`
+- `customer_id`
+- `merchant`
+- `description`
 
+Coercion and rejection rules are documented in `docs/` (Week 1 policy: reject missing required columns, coerce amount, normalise text fields, require non-empty customer_id).
+
+---
+
+## Local setup (Week 1)
+
+### Prerequisites
+- Python 3.11 installed
+- Virtualenv available
+- Optional: Docker and Docker Compose
+
+### 1) Create a virtualenv and install deps
+- Create `.venv`
+- Install requirements
+- Activate the environment
+
+(Use whatever workflow you already follow for this repo.)
+
+### 2) Environment variables
+This project uses environment variables for configuration. For Week 1, you can load them into your shell before running Django:
+
+- Copy `.env.example` to `.env`
+- Edit values as needed
+
+One reliable way to load `.env` into the current shell session:
+- `set -a; source .env; set +a`
+
+Note: If you run Django locally (non-Docker) and you are using Postgres, your DB host typically needs to be `localhost` rather than `db`. If your `.env` points at `db`, that is intended for Docker networking.
+
+---
+
+## Step 1: Run tests (local)
+
+Run the test suite:
+- `pytest -q`
+
+Run coverage:
+- `coverage run -m pytest -q`
+- `coverage report`
+
+CI enforces a minimum coverage threshold. If CI fails, check the coverage report for the missing lines and add targeted tests for those branches.
+
+---
+
+## Step 2: Run the app locally (dev server)
+
+Load env vars and start the server:
+- `set -a; source .env; set +a; python manage.py runserver`
+
+Open:
+- http://127.0.0.1:8000/
+
+Week 1 expected behaviour:
+- Upload `data/sample_transactions.csv`
+- Click the validate and score action
+- See KPIs and a scored table (category, confidence, risk, flag)
+- If a CSV is missing required columns, see a readable error message
+
+---
+
+## Step 3: Run via Docker
+
+### Quick checks
+List service names:
+- `docker compose config --services`
+
+### A) Start only Postgres (useful when running Django on host)
+- `docker compose up -d db`
+
+If your local Django process connects to Postgres, set host to `localhost` for local runs (either in `.env` or via exported env vars).
+
+### B) Start the full stack in containers
+If you have a web service defined in `docker-compose.yml`:
+- `docker compose up -d --build`
+
+Rebuild is important after dependency or code changes inside the image.
+
+View logs:
+- `docker compose logs -f`
+
+Stop:
+- `docker compose down`
+
+---
+
+## Common Week 1 gotchas
+
+- Git ignore patterns can accidentally exclude code (for example, patterns intended for datasets). If a module is missing in CI, verify with:
+  - `git check-ignore -v path/to/file.py`
+
+- Contract mismatch bugs are normal early on: a model can run correctly while the UI fails because expected diagnostic keys or output columns drifted. Week 1 fixes this by making contracts explicit and testing them.
+
+---
+
+## Roadmap
+
+### Week 1
+- Deterministic baselines
+- Unified scoring contract
+- Schema-validated ingestion
+- Dashboard wiring
+- CI hardening and one-command UX improvements
+- README v1
+
+### Future weeks (planned)
+- Persistence (Postgres models, audit logs)
+- Monitoring and metrics (scoring drift, ingestion failures)
+- Background jobs (Celery/Redis) where appropriate
+- Deployment workflow
+
+---
+
+## Maintainer
+Adrian Adewunmi
+
+## Repository
+https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project
+```
