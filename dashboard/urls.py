@@ -9,8 +9,6 @@ from django.urls import path
 
 from . import export_views, views
 
-app_name = "dashboard"
-
 urlpatterns = [
     path("", views.index, name="dashboard"),
     path("export/flagged/", export_views.export_flagged_csv, name="export_flagged"),

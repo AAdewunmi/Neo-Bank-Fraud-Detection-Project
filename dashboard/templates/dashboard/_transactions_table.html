@@ -1,7 +1,18 @@
-<div class="card">
-  <div class="card-header d-flex justify-content-between">
-    <span>Transactions</span>
-    <span class="badge bg-secondary">Threshold: {{ threshold }}</span>
+<div class="card shadow-sm">
+  <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="fw-semibold">Transactions</span>
+
+      {% if threshold %}
+        <span class="badge bg-secondary">Threshold: {{ threshold }}</span>
+      {% endif %}
+
+      {% if table %}
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'export_flagged' %}">
+          Export flagged
+        </a>
+      {% endif %}
+    </div>
   </div>
 
   <div class="card-body table-responsive">
@@ -14,18 +25,19 @@
           <th>Description</th>
           <th class="text-end">Amount</th>
           <th>Category</th>
-          <th>Confidence</th>
-          <th>Risk</th>
-          <th>Flag</th>
+          <th>Cat Conf</th>
+          <th>Fraud Risk</th>
+          <th>Status</th>
         </tr>
       </thead>
+
       <tbody>
         {% for r in table %}
         <tr>
           <td>{{ r.timestamp }}</td>
           <td>{{ r.customer_id }}</td>
           <td>{{ r.merchant }}</td>
-          <td>{{ r.description|truncatechars:60 }}</td>
+          <td class="text-truncate" style="max-width: 280px;">{{ r.description }}</td>
           <td class="text-end">{{ r.amount }}</td>
           <td>{{ r.category }}</td>
           <td>{{ r.category_confidence }}</td>

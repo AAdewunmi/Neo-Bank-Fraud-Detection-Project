@@ -1,26 +1,26 @@
 """
-CSV export views for the dashboard app.
+Export views for Ops dashboard.
 
-Contract:
-- Export reads from session payload written during scoring.
-- Export does not re-run scoring.
-- Export includes only flagged rows.
+Exports are session-backed:
+- no re-scoring on export
+- export is consistent with what the user last scored
 """
 from __future__ import annotations
 
 import csv
 from datetime import datetime, timezone
 from io import StringIO
+from typing import Dict, List
 
+from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 
-from .decorators import ops_access_required
-from .session_store import filter_flagged_rows, load_scored_run
+from .session_store import load_scored_rows
 
 
 def _filename_ts() -> str:
     """
-    UTC timestamp for filenames.
+    Build a UTC timestamp for the export filename.
 
     Returns:
         Timestamp string YYYYMMDD-HHMMSS.
@@ -28,39 +28,38 @@ def _filename_ts() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 
 
-@ops_access_required
+@login_required
 def export_flagged_csv(request: HttpRequest) -> HttpResponse:
     """
-    Export only flagged rows from the last scoring run.
+    Export only flagged rows from the last scored run.
 
-    Behavior:
-    - If no scored run exists: 400 with helpful message.
-    - If run exists but 0 flagged rows: CSV contains headers only.
-    - Content-Type: text/csv
-    - Content-Disposition set for file download.
+    Rules:
+    - 400 if no scored data in session
+    - CSV includes headers
+    - CSV contains only rows where flagged is True
 
     Args:
         request: Django request.
 
     Returns:
-        HttpResponse with CSV body.
+        CSV download response.
     """
-    run = load_scored_run(request.session)
-    if run is None or not run.fieldnames:
+    rows = load_scored_rows(request.session)
+    if not rows:
         return HttpResponse(
             "No export data found. Upload and score a CSV first.",
             status=400,
             content_type="text/plain; charset=utf-8",
         )
 
-    flagged_rows = filter_flagged_rows(run)
+    flagged: List[Dict] = [r for r in rows if bool(r.get("flagged")) is True]
+    fieldnames = list(rows[0].keys()) if rows else []
 
     buf = StringIO()
-    writer = csv.DictWriter(buf, fieldnames=run.fieldnames, extrasaction="ignore")
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
     writer.writeheader()
-
-    for row in flagged_rows:
-        writer.writerow({k: row.get(k, "") for k in run.fieldnames})
+    for r in flagged:
+        writer.writerow({k: r.get(k, "") for k in fieldnames})
 
     csv_text = buf.getvalue()
     buf.close()
