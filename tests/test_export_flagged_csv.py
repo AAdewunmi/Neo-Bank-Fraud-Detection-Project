@@ -65,29 +65,29 @@ def test_export_missing_session_returns_400(client, django_user_model) -> None:
     assert b"Upload and score a CSV first" in resp.content
 
 
-# def test_export_contains_only_flagged_rows(monkeypatch, client, django_user_model) -> None:
-#     user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
-#     client.force_login(user)
+def test_export_contains_only_flagged_rows(monkeypatch, client, django_user_model) -> None:
+    user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
+    client.force_login(user)
 
-#     monkeypatch.setattr("dashboard.views.services.read_csv", lambda f: pd.DataFrame([{"x": 1}]))
-#     monkeypatch.setattr("dashboard.views.services.score_df", lambda df, threshold: _fake_scoring())
+    monkeypatch.setattr("dashboard.views.services.read_csv", lambda f: pd.DataFrame([{"x": 1}]))
+    monkeypatch.setattr("dashboard.views.services.score_df", lambda df, threshold: _fake_scoring())
 
-#     upload = SimpleUploadedFile(
-#         "sample.csv",
-#         b"timestamp,amount,customer_id,merchant,description\n",
-#         content_type="text/csv",
-#     )
+    upload = SimpleUploadedFile(
+        "sample.csv",
+        b"timestamp,amount,customer_id,merchant,description\n",
+        content_type="text/csv",
+    )
 
-#     resp = client.post("/ops/", data={"threshold": "0.7", "csv_file": upload})
-#     assert resp.status_code == 200
+    resp = client.post("/ops/", data={"threshold": "0.7", "csv_file": upload})
+    assert resp.status_code == 200
 
-#     export = client.get("/ops/export/flagged/")
-#     assert export.status_code == 200
-#     assert export["Content-Type"].startswith("text/csv")
-#     assert "attachment; filename=" in export["Content-Disposition"]
+    export = client.get("/ops/export/flagged/")
+    assert export.status_code == 200
+    assert export["Content-Type"].startswith("text/csv")
+    assert "attachment; filename=" in export["Content-Disposition"]
 
-#     content = export.content.decode("utf-8")
-#     lines = [line for line in io.StringIO(content).read().splitlines() if line.strip()]
-#     assert len(lines) == 2
-#     assert "Electronics" in content
-#     assert "Coffee Shop" not in content
+    content = export.content.decode("utf-8")
+    lines = [line for line in io.StringIO(content).read().splitlines() if line.strip()]
+    assert len(lines) == 2
+    assert "Electronics" in content
+    assert "Coffee Shop" not in content
