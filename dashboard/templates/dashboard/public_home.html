@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-7">
+            <h1 class="display-6 fw-semibold mb-2">Neo-bank Platform</h1>
+            <p class="text-muted mb-3">
+              This project is a neo-bank prototype with an internal Fraud Ops workflow.
+              Ops users can upload transactions, score fraud risk, triage flagged activity, and export flagged subsets.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-dark" href="/ops/">Open Ops dashboard</a>
+              <a class="btn btn-outline-secondary" href="/accounts/login/">Ops sign in</a>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="fw-semibold">Customer site</div>
+                <div class="text-muted small">Public landing and product framing.</div>
+              </div>
+              <div class="col-md-4">
+                <div class="fw-semibold">Fraud Ops dashboard</div>
+                <div class="text-muted small">Upload → score → filter → export flagged only.</div>
+              </div>
+              <div class="col-md-4">
+                <div class="fw-semibold">Checkpoint discipline</div>
+                <div class="text-muted small">Contract-first ingestion and test-gated behavior.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="p-4 rounded-4 bg-light border">
+              <div class="fw-semibold mb-2">Week 2 focus</div>
+              <ul class="mb-0 text-muted">
+                <li>Upload → score → table</li>
+                <li>Export flagged subset as CSV</li>
+                <li>Internal ops-only access controls</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center text-muted small mt-3">
+      Work in progress: training-grade neo-bank platform build.
+    </div>
+  </div>
+</div>
+{% endblock %}
