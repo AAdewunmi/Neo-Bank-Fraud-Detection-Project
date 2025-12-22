@@ -3,15 +3,29 @@ Test settings for neobank_site.
 
 Goal:
 - Tests must not require external services (no local Postgres, no Docker dependency).
-- Use SQLite for pytest runs so CI is deterministic.
+- Reuse the full base settings (INSTALLED_APPS, MIDDLEWARE, ROOT_URLCONF, templates, etc.).
+- Override DATABASES to SQLite for deterministic pytest runs.
 
-Usage:
-- pytest.ini points DJANGO_SETTINGS_MODULE at this module.
+pytest.ini points DJANGO_SETTINGS_MODULE at this module.
 """
 from __future__ import annotations
 
-# from .settings import *  # noqa: F403
-from .settings import BASE_DIR  # noqa: F401
+from pathlib import Path
+
+from . import settings as base
+
+
+# Copy every UPPERCASE setting from the base settings module.
+for _name in dir(base):
+    if _name.isupper():
+        globals()[_name] = getattr(base, _name)
+
+
+# Ensure BASE_DIR exists even if base settings differ slightly.
+BASE_DIR = globals().get("BASE_DIR")
+if BASE_DIR is None:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    globals()["BASE_DIR"] = BASE_DIR
 
 
 DEBUG = False
@@ -19,7 +33,6 @@ DEBUG = False
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        # File-based SQLite is more reliable than :memory: across Django's connections.
         "NAME": str(BASE_DIR / "test.sqlite3"),
     }
 }
