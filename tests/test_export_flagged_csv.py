@@ -56,13 +56,13 @@ def test_ops_requires_login(client) -> None:
     assert "/accounts/login/" in resp["Location"]
 
 
-# def test_export_missing_session_returns_400(client, django_user_model) -> None:
-#     user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
-#     client.force_login(user)
+def test_export_missing_session_returns_400(client, django_user_model) -> None:
+    user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
+    client.force_login(user)
 
-#     resp = client.get("/ops/export/flagged/")
-#     assert resp.status_code == 400
-#     assert b"Upload and score a CSV first" in resp.content
+    resp = client.get("/ops/export/flagged/")
+    assert resp.status_code == 400
+    assert b"Upload and score a CSV first" in resp.content
 
 
 # def test_export_contains_only_flagged_rows(monkeypatch, client, django_user_model) -> None:
