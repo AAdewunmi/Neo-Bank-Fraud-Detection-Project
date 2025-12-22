@@ -50,10 +50,10 @@ def _fake_scoring() -> Tuple[pd.DataFrame, dict]:
     return scored, diags
 
 
-# def test_ops_requires_login(client) -> None:
-#     resp = client.get("/ops/")
-#     assert resp.status_code == 302
-#     assert "/accounts/login/" in resp["Location"]
+def test_ops_requires_login(client) -> None:
+    resp = client.get("/ops/")
+    assert resp.status_code == 302
+    assert "/accounts/login/" in resp["Location"]
 
 
 # def test_export_missing_session_returns_400(client, django_user_model) -> None:
