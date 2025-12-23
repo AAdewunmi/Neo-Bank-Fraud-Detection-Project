@@ -88,22 +88,22 @@ def test_ops_access_forbids_non_staff_user_when_staff_required(rf: RequestFactor
     assert "Staff access required." in body
 
 
-# @override_settings(
-#     DASHBOARD_REQUIRE_LOGIN=True,
-#     DASHBOARD_REQUIRE_STAFF=True,
-# )
-# def test_ops_access_allows_staff_user_when_requirements_met(rf: RequestFactory) -> None:
-#     """
-#     Staff users who are authenticated pass through to the underlying view.
-#     """
-#     request = rf.get("/ops/")
-#     request.user = types.SimpleNamespace(is_authenticated=True, is_staff=True)
+@override_settings(
+    DASHBOARD_REQUIRE_LOGIN=True,
+    DASHBOARD_REQUIRE_STAFF=True,
+)
+def test_ops_access_allows_staff_user_when_requirements_met(rf: RequestFactory) -> None:
+    """
+    Staff users who are authenticated pass through to the underlying view.
+    """
+    request = rf.get("/ops/")
+    request.user = types.SimpleNamespace(is_authenticated=True, is_staff=True)
 
-#     guarded_view = ops_access_required(_dummy_view)
-#     response = guarded_view(request)
+    guarded_view = ops_access_required(_dummy_view)
+    response = guarded_view(request)
 
-#     assert response.status_code == 200
-#     assert response.content.decode("utf-8") == "OK"
+    assert response.status_code == 200
+    assert response.content.decode("utf-8") == "OK"
 
 
 # @override_settings(
