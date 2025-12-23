@@ -106,20 +106,20 @@ def test_ops_access_allows_staff_user_when_requirements_met(rf: RequestFactory) 
     assert response.content.decode("utf-8") == "OK"
 
 
-# @override_settings(
-#     DASHBOARD_REQUIRE_LOGIN=False,
-#     DASHBOARD_REQUIRE_STAFF=False,
-# )
-# def test_ops_access_allows_when_checks_disabled(rf: RequestFactory) -> None:
-#     """
-#     When both DASHBOARD_REQUIRE_LOGIN and DASHBOARD_REQUIRE_STAFF are disabled,
-#     the decorator should behave like a no-op for access control.
-#     """
-#     request = rf.get("/ops/")
-#     request.user = types.SimpleNamespace(is_authenticated=False, is_staff=False)
+@override_settings(
+    DASHBOARD_REQUIRE_LOGIN=False,
+    DASHBOARD_REQUIRE_STAFF=False,
+)
+def test_ops_access_allows_when_checks_disabled(rf: RequestFactory) -> None:
+    """
+    When both DASHBOARD_REQUIRE_LOGIN and DASHBOARD_REQUIRE_STAFF are disabled,
+    the decorator should behave like a no-op for access control.
+    """
+    request = rf.get("/ops/")
+    request.user = types.SimpleNamespace(is_authenticated=False, is_staff=False)
 
-#     guarded_view = ops_access_required(_dummy_view)
-#     response = guarded_view(request)
+    guarded_view = ops_access_required(_dummy_view)
+    response = guarded_view(request)
 
-#     assert response.status_code == 200
-#     assert response.content.decode("utf-8") == "OK"
+    assert response.status_code == 200
+    assert response.content.decode("utf-8") == "OK"
