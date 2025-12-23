@@ -69,23 +69,23 @@ def test_ops_access_redirects_anonymous_when_login_required(rf: RequestFactory) 
     assert "/accounts/login/" in response["Location"]
 
 
-# @override_settings(
-#     DASHBOARD_REQUIRE_LOGIN=True,
-#     DASHBOARD_REQUIRE_STAFF=True,
-# )
-# def test_ops_access_forbids_non_staff_user_when_staff_required(rf: RequestFactory) -> None:
-#     """
-#     Authenticated non-staff users receive HTTP 403 when staff access is required.
-#     """
-#     request = rf.get("/ops/")
-#     request.user = types.SimpleNamespace(is_authenticated=True, is_staff=False)
+@override_settings(
+    DASHBOARD_REQUIRE_LOGIN=True,
+    DASHBOARD_REQUIRE_STAFF=True,
+)
+def test_ops_access_forbids_non_staff_user_when_staff_required(rf: RequestFactory) -> None:
+    """
+    Authenticated non-staff users receive HTTP 403 when staff access is required.
+    """
+    request = rf.get("/ops/")
+    request.user = types.SimpleNamespace(is_authenticated=True, is_staff=False)
 
-#     guarded_view = ops_access_required(_dummy_view)
-#     response = guarded_view(request)
+    guarded_view = ops_access_required(_dummy_view)
+    response = guarded_view(request)
 
-#     assert response.status_code == 403
-#     body = response.content.decode("utf-8")
-#     assert "Staff access required." in body
+    assert response.status_code == 403
+    body = response.content.decode("utf-8")
+    assert "Staff access required." in body
 
 
 # @override_settings(
