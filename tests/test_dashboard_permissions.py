@@ -48,25 +48,25 @@ def _dummy_view(request: HttpRequest, *args, **kwargs) -> HttpResponse:
     return HttpResponse("OK", status=200)
 
 
-# @override_settings(
-#     DASHBOARD_REQUIRE_LOGIN=True,
-#     DASHBOARD_REQUIRE_STAFF=True,
-#     LOGIN_URL="/accounts/login/",
-# )
-# def test_ops_access_redirects_anonymous_when_login_required(rf: RequestFactory) -> None:
-#     """
-#     Anonymous users must be redirected to the login page
-#     when DASHBOARD_REQUIRE_LOGIN is enabled.
-#     """
-#     request = rf.get("/ops/")
-#     # Lightweight fake user object with the attributes the decorator expects.
-#     request.user = types.SimpleNamespace(is_authenticated=False, is_staff=False)
+@override_settings(
+    DASHBOARD_REQUIRE_LOGIN=True,
+    DASHBOARD_REQUIRE_STAFF=True,
+    LOGIN_URL="/accounts/login/",
+)
+def test_ops_access_redirects_anonymous_when_login_required(rf: RequestFactory) -> None:
+    """
+    Anonymous users must be redirected to the login page
+    when DASHBOARD_REQUIRE_LOGIN is enabled.
+    """
+    request = rf.get("/ops/")
+    # Lightweight fake user object with the attributes the decorator expects.
+    request.user = types.SimpleNamespace(is_authenticated=False, is_staff=False)
 
-#     guarded_view = ops_access_required(_dummy_view)
-#     response = guarded_view(request)
+    guarded_view = ops_access_required(_dummy_view)
+    response = guarded_view(request)
 
-#     assert response.status_code == 302
-#     assert "/accounts/login/" in response["Location"]
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]
 
 
 # @override_settings(
