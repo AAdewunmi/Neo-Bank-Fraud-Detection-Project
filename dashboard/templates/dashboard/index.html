@@ -30,12 +30,54 @@
         {% endif %}
       </div>
     </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header">Filters (no re-score)</div>
+      <div class="card-body">
+        <form method="get">
+          <div class="form-check mb-3">
+            {{ filter_form.flagged_only }}
+            <label class="form-check-label">Flagged only</label>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Customer id</label>
+            {{ filter_form.customer_id }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Merchant</label>
+            {{ filter_form.merchant }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            {{ filter_form.category }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Min fraud risk</label>
+            {{ filter_form.min_fraud_risk }}
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark flex-fill" type="submit">Apply</button>
+            <a class="btn btn-outline-secondary flex-fill" href="/ops/">Reset</a>
+          </div>
+
+          <div class="form-text mt-2">
+            Filters apply to the last scored run stored in session.
+          </div>
+        </form>
+      </div>
+    </div>
   </aside>
 
   <section class="col-md-8">
     {% if table %}
       {% include "dashboard/_kpis.html" %}
       {% include "dashboard/_transactions_table.html" %}
+      {% include "dashboard/_model_insights.html" %}
     {% else %}
       <div class="alert alert-info">
         Upload a CSV to validate the schema and run scoring.
