@@ -69,3 +69,43 @@ def export_flagged_csv(request: HttpRequest) -> HttpResponse:
     resp["Content-Disposition"] = f'attachment; filename="{filename}"'
     resp["Cache-Control"] = "no-store"
     return resp
+
+
+@login_required
+def export_all_csv(request: HttpRequest) -> HttpResponse:
+    """
+    Export all rows from the last scored run.
+
+    Rules:
+    - 400 if no scored data in session
+    - CSV includes headers
+
+    Args:
+        request: Django request.
+
+    Returns:
+        CSV download response.
+    """
+    rows = load_scored_rows(request.session)
+    if not rows:
+        return HttpResponse(
+            "No export data found. Upload and score a CSV first.",
+            status=400,
+            content_type="text/plain; charset=utf-8",
+        )
+
+    fieldnames = list(rows[0].keys())
+    buf = StringIO()
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for r in rows:
+        writer.writerow({k: r.get(k, "") for k in fieldnames})
+
+    csv_text = buf.getvalue()
+    buf.close()
+
+    filename = f"all-transactions-{_filename_ts()}.csv"
+    resp = HttpResponse(csv_text, content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    resp["Cache-Control"] = "no-store"
+    return resp

@@ -1,88 +1,28 @@
 {% extends "dashboard/base.html" %}
-
 {% block title %}LedgerGuard{% endblock %}
 
 {% block content %}
-<div class="row g-4 align-items-stretch">
-  <div class="col-lg-7">
-    <div class="card shadow-sm h-100">
-      <div class="card-body p-4 p-lg-5">
-        <h1 class="display-6 mb-3">Neo-bank fraud ops prototype</h1>
-        <p class="text-body-secondary mb-4">
-          LedgerGuard is a training-grade fraud detection system with an internal Ops workflow.
-          Ops users upload transactions, score fraud risk, triage flagged activity, and export flagged subsets for review.
-        </p>
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-body p-5">
+          <h1 class="display-6 fw-semibold mb-3">Neo-bank Platform</h1>
+          <p class="text-muted mb-4">
+            This project is a Neo-bank prototype with an internal Fraud Ops workflow.
+            Ops users can upload transactions, score fraud risk, triage flagged activity,
+            and export flagged subsets.
+          </p>
 
-        <div class="d-flex flex-wrap gap-2">
-          <a class="btn btn-dark" href="{% url 'dashboard' %}">Open Ops dashboard</a>
-          <a class="btn btn-outline-secondary" href="{% url 'login' %}?next={% url 'dashboard' %}">Ops sign in</a>
-          <a class="btn btn-outline-secondary" href="https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project" target="_blank" rel="noopener">View on GitHub</a>
-        </div>
-
-        <div class="mt-4">
-          <div class="small muted">
-            Ops access requires an authorised staff account.
-            Create one locally using Django admin or createsuperuser.
+          <div class="d-flex gap-2">
+            <!-- CHANGED -->
+            <a class="btn btn-dark" href="{% url 'dashboard:dashboard' %}">Open Ops dashboard</a>
+            <!-- CHANGED -->
+            <a class="btn btn-outline-secondary" href="{% url 'login' %}?next={% url 'dashboard:dashboard' %}">
+              Ops sign in
+            </a>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="col-lg-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-body p-4">
-        <h2 class="h5 mb-3">What you can demo</h2>
-        <ul class="mb-0">
-          <li>Upload CSV and score transactions with the current baseline</li>
-          <li>Review and filter a session-backed scored run without rescoring</li>
-          <li>Export flagged transactions as a clean CSV for Ops review</li>
-          <li>Enforce Ops access controls and predictable login redirects</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-4 mt-1">
-  <div class="col-md-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body p-4">
-        <h3 class="h6 mb-2">Internal Ops surface</h3>
-        <p class="text-body-secondary mb-0">
-          Routes live under the Ops namespace and require authentication.
-          Staff-only access protects the surface from accidental exposure.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body p-4">
-        <h3 class="h6 mb-2">Session-backed run contract</h3>
-        <p class="text-body-secondary mb-0">
-          The dashboard stores the last scored run in session, then applies filters on the server.
-          Export reads from the same contract to keep behaviour consistent.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body p-4">
-        <h3 class="h6 mb-2">Test-gated behaviour</h3>
-        <p class="text-body-secondary mb-0">
-          Request flows, exports, and error states have tests that lock in product behaviour.
-          Changes surface quickly in CI.
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="text-center muted small mt-4">
-  Work in progress, training-grade neo-bank platform build.
-</div>
 {% endblock %}

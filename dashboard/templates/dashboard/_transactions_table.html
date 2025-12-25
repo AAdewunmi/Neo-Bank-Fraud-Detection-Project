@@ -1,14 +1,26 @@
 <div class="card shadow-sm">
   <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
-    <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2">
       <span class="fw-semibold">Transactions</span>
-
       {% if threshold %}
         <span class="badge bg-secondary">Threshold: {{ threshold }}</span>
       {% endif %}
+      {% if view_meta %}
+        <span class="badge bg-light text-dark border">Visible: {{ view_meta.visible_count }}</span>
+      {% endif %}
+    </div>
 
-      {% if table %}
-        <a class="btn btn-sm btn-outline-danger" href="{% url 'export_flagged' %}">
+    <div class="d-flex gap-2 align-items-center">
+      <input
+        id="txSearch"
+        type="search"
+        class="form-control form-control-sm"
+        style="max-width: 240px;"
+        placeholder="Search table"
+        aria-label="Search transactions table"
+      >
+      {% if export_available %}
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'dashboard:export_flagged' %}">
           Export flagged
         </a>
       {% endif %}
@@ -16,7 +28,7 @@
   </div>
 
   <div class="card-body table-responsive">
-    <table class="table table-sm align-middle">
+    <table id="transactionsTable" class="table table-sm align-middle">
       <thead>
         <tr>
           <th>Timestamp</th>
@@ -55,3 +67,22 @@
     </table>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const table = new DataTable('#transactionsTable', {
+      searchable: true,
+      perPage: 10,
+      labels: {
+        placeholder: "Search transactions...",
+        perPage: "{select} entries per page",
+        noRows: "No transactions found",
+        info: "Showing {start} to {end} of {rows} transactions"
+      }
+    });
+
+    const searchInput = document.getElementById('txSearch');
+    searchInput.addEventListener('input', function() {
+      table.search(this.value);
+    });
+  });
+</script> 
