@@ -1,19 +1,19 @@
+# File: neobank_site/settings.py
 """
-Django settings for neobank_site.
-
-Week 1: minimal configuration to support routing, templates, and reproducible dev environments.
-Postgres is the default DB, wired for both local-hosted Django and Docker-hosted Django.
+Django settings for neobank_site project.
 """
-from __future__ import annotations
 
-import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-change-me")
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS: list[str] = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+SECRET_KEY = "django-insecure-change-me"
+
+DEBUG = True
+
+ALLOWED_HOSTS: list[str] = []
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "dashboard",
 ]
 
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -35,7 +36,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 ROOT_URLCONF = "neobank_site.urls"
+
 
 TEMPLATES = [
     {
@@ -53,33 +56,49 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = "neobank_site.wsgi.application"
 
-RUNNING_IN_DOCKER = os.getenv("RUNNING_IN_DOCKER", "0") == "1"
-
-DB_NAME = os.getenv("DB_NAME", "neobank")
-DB_USER = os.getenv("DB_USER", "neobank")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "neobank_password")
-DB_HOST = os.getenv("DB_HOST", "db" if RUNNING_IN_DOCKER else "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": DB_NAME,
-        "USER": DB_USER,
-        "PASSWORD": DB_PASSWORD,
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+
 LANGUAGE_CODE = "en-gb"
+
 TIME_ZONE = "UTC"
+
 USE_I18N = True
+
 USE_TZ = True
 
+
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Authentication routing
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/ops/"
+LOGOUT_REDIRECT_URL = "/"
