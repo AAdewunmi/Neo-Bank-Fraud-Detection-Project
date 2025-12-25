@@ -29,6 +29,8 @@ from typing import Any, Dict, List, Optional
 
 SESSION_SCORED_ROWS_KEY = "dashboard_scored_rows"
 SESSION_DIAGS_KEY = "dashboard_diags"
+LEGACY_SCORED_ROWS_KEY = "scored_rows"
+LEGACY_DIAGS_KEY = "scored_diags"
 
 
 def _is_jsonable(value: Any) -> bool:
@@ -110,6 +112,16 @@ class ScoredRun:
     rows: List[Dict[str, Any]]
     run_meta: Dict[str, Any]
 
+    def __contains__(self, key: object) -> bool:
+        return key in {"rows", "diags"}
+
+    def __getitem__(self, key: str) -> Any:
+        if key == "rows":
+            return self.rows
+        if key == "diags":
+            return self.run_meta
+        raise KeyError(key)
+
 
 def build_scored_run(
     scored_rows: Sequence[Mapping[str, Any]],
@@ -185,7 +197,9 @@ def save_scored_rows(
     rows:
         Sequence of row dictionaries to persist.
     """
-    session[SESSION_SCORED_ROWS_KEY] = [_coerce_jsonable(r) for r in rows]
+    payload = [_coerce_jsonable(r) for r in rows]
+    session[SESSION_SCORED_ROWS_KEY] = payload
+    session[LEGACY_SCORED_ROWS_KEY] = payload
 
 
 def save_diags(
@@ -202,7 +216,9 @@ def save_diags(
     diags:
         Mapping of diagnostic values to store.
     """
-    session[SESSION_DIAGS_KEY] = _coerce_jsonable(dict(diags))
+    payload = _coerce_jsonable(dict(diags))
+    session[SESSION_DIAGS_KEY] = payload
+    session[LEGACY_DIAGS_KEY] = payload
 
 
 def save_scored_run(
@@ -270,6 +286,12 @@ def load_scored_rows(session: Mapping[str, Any]) -> Optional[List[Dict[str, Any]
         otherwise None.
     """
     rows = session.get(SESSION_SCORED_ROWS_KEY)
+    if rows is None:
+        legacy_run = session.get("scored_run")
+        if isinstance(legacy_run, Mapping):
+            rows = legacy_run.get("rows")
+    if rows is None:
+        rows = session.get(LEGACY_SCORED_ROWS_KEY)
     if not isinstance(rows, list):
         return None
 
@@ -300,9 +322,31 @@ def load_diags(session: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
         otherwise None.
     """
     diags = session.get(SESSION_DIAGS_KEY)
+    if diags is None:
+        legacy_run = session.get("scored_run")
+        if isinstance(legacy_run, Mapping):
+            diags = legacy_run.get("diags")
+    if diags is None:
+        diags = session.get(LEGACY_DIAGS_KEY)
     if not isinstance(diags, Mapping):
         return None
     return dict(diags)
+
+
+def clear_scored_run(session: MutableMapping[str, Any]) -> None:
+    """
+    Remove all scored-run related keys from the session.
+
+    This clears both the current and legacy session keys.
+    """
+    for key in (
+        SESSION_SCORED_ROWS_KEY,
+        SESSION_DIAGS_KEY,
+        LEGACY_SCORED_ROWS_KEY,
+        LEGACY_DIAGS_KEY,
+        "scored_run",
+    ):
+        session.pop(key, None)
 
 
 def load_scored_run(session: Mapping[str, Any]) -> Optional[ScoredRun]:

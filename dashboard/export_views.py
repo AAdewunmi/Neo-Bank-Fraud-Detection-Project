@@ -54,6 +54,12 @@ def export_flagged_csv(request: HttpRequest) -> HttpResponse:
 
     flagged: List[Dict] = [r for r in rows if bool(r.get("flagged")) is True]
     fieldnames = list(rows[0].keys()) if rows else []
+    if not flagged:
+        return HttpResponse(
+            "No flagged rows available for export.",
+            status=400,
+            content_type="text/plain; charset=utf-8",
+        )
 
     buf = StringIO()
     writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
