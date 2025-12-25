@@ -15,6 +15,7 @@ from dashboard.views import public_home
 
 urlpatterns = [
     path("", public_home, name="home"),
+    path("", public_home, name="public_home"),
     path("app/", public_home, name="app_home"),
     path("ops/", include("dashboard.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
