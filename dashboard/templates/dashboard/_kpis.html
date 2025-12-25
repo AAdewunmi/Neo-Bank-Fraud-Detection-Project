@@ -1,4 +1,4 @@
-<div class="card mb-3">
+<div class="card mb-3 shadow-sm">
   <div class="card-header">KPIs</div>
   <div class="card-body">
     <div class="row text-center">
@@ -15,5 +15,22 @@
         <div class="h3">{{ kpi.pct_auto_cat }}</div>
       </div>
     </div>
+
+    {% if run_meta %}
+      <hr class="my-3">
+      <div class="row g-2 small text-muted">
+        <div class="col-md-6">
+          <div><span class="fw-semibold">Last scored:</span> {{ run_meta.scored_at }}</div>
+          <div><span class="fw-semibold">Threshold:</span> {{ run_meta.threshold }}</div>
+        </div>
+        <div class="col-md-6">
+          <div><span class="fw-semibold">Flagged count:</span> {{ run_meta.flagged_count }}</div>
+          {% if view_meta %}
+            <div><span class="fw-semibold">Visible rows:</span> {{ view_meta.visible_count }}</div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
+
