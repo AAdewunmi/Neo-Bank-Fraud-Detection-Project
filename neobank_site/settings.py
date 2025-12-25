@@ -10,7 +10,8 @@ Week 2 intent:
 Database intent:
 - Dev runs on Postgres (Docker or local Postgres).
 - CI runs on SQLite to keep GitHub Actions lightweight.
-- Local commands without Postgres env vars fall back to SQLite, so pytest can run easily.
+- Local commands without Postgres env vars fall back to SQLite, so pytest can
+  run easily.
 
 Important:
 - Users live in the active database.
@@ -31,7 +32,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-key-change-me")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1",
+).split(",")
 
 
 INSTALLED_APPS = [
@@ -122,11 +126,15 @@ def _default_sqlite() -> Dict[str, Any]:
 # CHANGE: clean switching logic
 # Priority order:
 # 1) DATABASE_URL (Docker dev uses this)
-# 2) CI or GitHub Actions -> SQLite (keeps CI light)
+# 2) CI or GitHub Actions ->
+# SQLite (keeps CI light)
 # 3) Postgres env vars present -> Postgres (local dev)
 # 4) Fallback -> SQLite (makes local pytest easy)
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-IS_CI = os.environ.get("CI", "").lower() == "true" or os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+IS_CI = (
+    os.environ.get("CI", "").lower() == "true"
+    or os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+)
 
 if DATABASE_URL:
     DATABASES = {"default": _database_from_url(DATABASE_URL)}
@@ -148,10 +156,23 @@ else:
 
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        )
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.CommonPasswordValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.NumericPasswordValidator"
+        )
+    },
 ]
 
 LANGUAGE_CODE = "en-gb"
