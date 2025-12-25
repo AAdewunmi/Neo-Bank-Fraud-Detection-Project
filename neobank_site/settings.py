@@ -47,13 +47,15 @@ def _postgres_database_config_from_env() -> dict:
     Build a Postgres database config from discrete environment variables.
 
     Expected variables:
-        POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT
+        POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST,
+        POSTGRES_PORT
 
     Returns:
         A Django DATABASES['default'] config dict for Postgres.
     """
     # CHANGED: Do not default POSTGRES_HOST to localhost.
-    # Absence of POSTGRES_HOST means "no Postgres configured" and we fall back to SQLite.
+    # Absence of POSTGRES_HOST means "no Postgres configured" and we fall back
+    # to SQLite.
     db_name = os.getenv("POSTGRES_DB", "neobank")
     db_user = os.getenv("POSTGRES_USER", "neobank")
     db_password = os.getenv("POSTGRES_PASSWORD", "neobank_password")
@@ -94,7 +96,8 @@ def _postgres_database_config_from_url(database_url: str) -> dict:
         raise ValueError(f"Unsupported DATABASE_URL scheme: {scheme}")
 
     options = parse_qs(parsed.query or "")
-    # Keep options minimal and explicit. Extend later if you add sslmode or similar.
+    # Keep options minimal and explicit. Extend later if you add sslmode or
+    # similar.
     django_options = {}
     if "sslmode" in options and options["sslmode"]:
         django_options["sslmode"] = options["sslmode"][0]
@@ -136,7 +139,8 @@ def _select_database(base_dir: Path) -> dict:
             return _postgres_database_config_from_url(database_url)
         return _postgres_database_config_from_env()
 
-    # CHANGED: CI defaults to SQLite unless you explicitly set DJANGO_DB or DATABASE_URL.
+    # CHANGED: CI defaults to SQLite unless you explicitly set DJANGO_DB or
+    # DATABASE_URL.
     is_ci = (
         (os.getenv("GITHUB_ACTIONS") or "").lower() == "true"
         or (os.getenv("CI") or "").lower() == "true"
@@ -149,13 +153,23 @@ def _select_database(base_dir: Path) -> dict:
         parsed = urlparse(database_url)
         scheme = (parsed.scheme or "").lower()
         if scheme in {"sqlite", "sqlite3"}:
-            # Support sqlite:///absolute/path style URLs if you later want them.
-            name = (parsed.path or "").lstrip("/") or str(base_dir / "db.sqlite3")
-            return {"ENGINE": "django.db.backends.sqlite3", "NAME": f"/{name}" if database_url.startswith("sqlite:////") else name}
+            # Support sqlite:///absolute/path style URLs if you later want
+            # them.
+            name = (parsed.path or "").lstrip("/") or str(
+                base_dir / "db.sqlite3"
+            )
+            sqlite_name = (
+                f"/{name}" if database_url.startswith("sqlite:////") else name
+            )
+            return {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": sqlite_name,
+            }
         if scheme in {"postgres", "postgresql"}:
             return _postgres_database_config_from_url(database_url)
 
-    # CHANGED: Use POSTGRES_HOST as the explicit signal for a local Postgres setup.
+    # CHANGED: Use POSTGRES_HOST as the explicit signal for a local Postgres
+    # setup.
     if RUNNING_IN_DOCKER or os.getenv("POSTGRES_HOST"):
         return _postgres_database_config_from_env()
 
@@ -166,8 +180,25 @@ DATABASES = {"default": _select_database(BASE_DIR)}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.MinimumLengthValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.CommonPasswordValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.NumericPasswordValidator"
+        )
+    },
 ]

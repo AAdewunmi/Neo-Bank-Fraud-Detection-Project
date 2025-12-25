@@ -5,32 +5,29 @@ services:
   db:
     image: postgres:16-alpine
     container_name: neobank_db
-    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-neobank}
       POSTGRES_USER: ${POSTGRES_USER:-neobank}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-neobank_password}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-neobank} -d ${POSTGRES_DB:-neobank}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-neobank} -d ${POSTGRES_DB:-neobank} -h localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: neobank_web
-    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       RUNNING_IN_DOCKER: "1"
+      DJANGO_DB: "postgres" # CHANGED: Force Postgres inside Docker, regardless of CI-related env vars.
       DEBUG: ${DEBUG:-True}
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
@@ -46,8 +43,8 @@ services:
       - .:/app
     command: >
       sh -c "
-        python manage.py migrate &&
-        python manage.py runserver 0.0.0.0:8000
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000
       "
 
 volumes:
