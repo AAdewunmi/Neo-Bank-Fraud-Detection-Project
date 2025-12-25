@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   neo_bank_app:
     container_name: neo_bank_app
@@ -26,17 +28,24 @@ services:
       db:
         condition: service_healthy
     environment:
+      # CHANGED: Force Postgres inside Docker, regardless of CI/SQLite defaults
+      DJANGO_DB: "postgres"
       RUNNING_IN_DOCKER: "1"
-      DJANGO_DB: "postgres" # CHANGED: Force Postgres inside Docker, regardless of CI-related env vars.
+
+      # Django and Postgres settings
       DEBUG: ${DEBUG:-True}
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+
       POSTGRES_DB: ${POSTGRES_DB:-neobank}
       POSTGRES_USER: ${POSTGRES_USER:-neobank}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-neobank_password}
       POSTGRES_HOST: "db"
       POSTGRES_PORT: "5432"
+
+      # CHANGED: Ensure Django can connect through a URL
       DATABASE_URL: postgres://${POSTGRES_USER:-neobank}:${POSTGRES_PASSWORD:-neobank_password}@db:5432/${POSTGRES_DB:-neobank}
+
     ports:
       - "8000:8000"
     volumes:
