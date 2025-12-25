@@ -1,58 +1,88 @@
 {% extends "dashboard/base.html" %}
 
+{% block title %}LedgerGuard{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-10">
-    <div class="card shadow-sm">
+<div class="row g-4 align-items-stretch">
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
       <div class="card-body p-4 p-lg-5">
-        <div class="row align-items-center g-4">
-          <div class="col-lg-7">
-            <h1 class="display-6 fw-semibold mb-2">Neo-bank Platform</h1>
-            <p class="text-muted mb-3">
-              This project is a Neo-bank prototype with an internal Fraud Ops workflow.
-              Ops users can upload transactions, score fraud risk, triage flagged activity, and export flagged subsets.
-            </p>
+        <h1 class="display-6 mb-3">Neo-bank fraud ops prototype</h1>
+        <p class="text-body-secondary mb-4">
+          LedgerGuard is a training-grade fraud detection system with an internal Ops workflow.
+          Ops users upload transactions, score fraud risk, triage flagged activity, and export flagged subsets for review.
+        </p>
 
-            <div class="d-flex flex-wrap gap-2">
-              <a class="btn btn-dark" href="/ops/">Open Ops dashboard</a>
-              <a class="btn btn-outline-secondary" href="/accounts/login/">Ops sign in</a>
-            </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-dark" href="{% url 'dashboard' %}">Open Ops dashboard</a>
+          <a class="btn btn-outline-secondary" href="{% url 'login' %}?next={% url 'dashboard' %}">Ops sign in</a>
+          <a class="btn btn-outline-secondary" href="https://github.com/AAdewunmi/Neo-Bank-Fraud-Detection-Project" target="_blank" rel="noopener">View on GitHub</a>
+        </div>
 
-            <hr class="my-4">
-
-            <div class="row g-3">
-              <div class="col-md-4">
-                <div class="fw-semibold">Customer site</div>
-                <div class="text-muted small">Public landing and product framing.</div>
-              </div>
-              <div class="col-md-4">
-                <div class="fw-semibold">Fraud Ops dashboard</div>
-                <div class="text-muted small">Upload → score → filter → export flagged only.</div>
-              </div>
-              <div class="col-md-4">
-                <div class="fw-semibold">Checkpoint discipline</div>
-                <div class="text-muted small">Contract-first ingestion and test-gated behavior.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-5">
-            <div class="p-4 rounded-4 bg-light border">
-              <div class="fw-semibold mb-2">Week 2 focus</div>
-              <ul class="mb-0 text-muted">
-                <li>Upload → score → table</li>
-                <li>Export flagged subset as CSV</li>
-                <li>Internal ops-only access controls</li>
-              </ul>
-            </div>
+        <div class="mt-4">
+          <div class="small muted">
+            Ops access requires an authorised staff account.
+            Create one locally using Django admin or createsuperuser.
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="text-center text-muted small mt-3">
-      Work in progress: training-grade neo-bank platform build.
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">What you can demo</h2>
+        <ul class="mb-0">
+          <li>Upload CSV and score transactions with the current baseline</li>
+          <li>Review and filter a session-backed scored run without rescoring</li>
+          <li>Export flagged transactions as a clean CSV for Ops review</li>
+          <li>Enforce Ops access controls and predictable login redirects</li>
+        </ul>
+      </div>
     </div>
   </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h3 class="h6 mb-2">Internal Ops surface</h3>
+        <p class="text-body-secondary mb-0">
+          Routes live under the Ops namespace and require authentication.
+          Staff-only access protects the surface from accidental exposure.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h3 class="h6 mb-2">Session-backed run contract</h3>
+        <p class="text-body-secondary mb-0">
+          The dashboard stores the last scored run in session, then applies filters on the server.
+          Export reads from the same contract to keep behaviour consistent.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h3 class="h6 mb-2">Test-gated behaviour</h3>
+        <p class="text-body-secondary mb-0">
+          Request flows, exports, and error states have tests that lock in product behaviour.
+          Changes surface quickly in CI.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center muted small mt-4">
+  Work in progress, training-grade neo-bank platform build.
 </div>
 {% endblock %}
