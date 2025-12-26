@@ -1,28 +1,59 @@
 {% extends "dashboard/base.html" %}
-{% block title %}LedgerGuard{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="card shadow-sm">
-        <div class="card-body p-5">
-          <h1 class="display-6 fw-semibold mb-3">Neo-bank Platform</h1>
-          <p class="text-muted mb-4">
-            This project is a Neo-bank prototype with an internal Fraud Ops workflow.
-            Ops users can upload transactions, score fraud risk, triage flagged activity,
-            and export flagged subsets.
-          </p>
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-7">
+            <h1 class="display-6 fw-semibold mb-2">LedgerGuard</h1>
+            <p class="text-muted mb-3">
+              A neo-bank prototype with an internal fraud operations workflow.
+              Transactions follow a validated contract, receive a risk score,
+              and surface through review and export tools designed for audit.
+            </p>
 
-          <div class="d-flex gap-2">
-            <!-- CHANGED -->
-            <a class="btn btn-dark" href="{% url 'dashboard:dashboard' %}">Open Ops dashboard</a>
-            <!-- CHANGED -->
-            <a class="btn btn-outline-secondary" href="{% url 'login' %}?next={% url 'dashboard:dashboard' %}">
-              Ops sign in
-            </a>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-dark" href="/ops/">Open Ops dashboard</a>
+              <a class="btn btn-outline-secondary" href="/accounts/login/">Ops sign in</a>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="fw-semibold">Customer surface</div>
+                <div class="text-muted small">Landing and product framing.</div>
+              </div>
+              <div class="col-md-4">
+                <div class="fw-semibold">Fraud operations</div>
+                <div class="text-muted small">Upload, score, filter, export.</div>
+              </div>
+              <div class="col-md-4">
+                <div class="fw-semibold">Engineering discipline</div>
+                <div class="text-muted small">Session backed state and test gated behaviour.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="p-4 rounded-4 bg-light border">
+              <div class="fw-semibold mb-2">Platform intent</div>
+              <p class="text-muted mb-0 small">
+                This build treats fraud review as an operational system.
+                Scored runs remain stable, views change without rescoring,
+                and exports reflect exactly what reviewers see.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <div class="text-center text-muted small mt-3">
+      Work in progress. Training grade neo-bank platform.
+    </div>
   </div>
+</div>
 {% endblock %}
