@@ -18,13 +18,13 @@ def test_ops_requires_login(client) -> None:
     assert "/accounts/login/" in resp["Location"]
 
 
-# def test_ops_ok_after_login(client, django_user_model) -> None:
-#     """Ops area should load for a staff user once authenticated."""
-#     user = django_user_model.objects.create_user(
-#         username="ops", password="pass1234", is_staff=True
-#     )
-#     # Force session auth to avoid relying on the login view behavior here.
-#     client.force_login(user)
+def test_ops_ok_after_login(client, django_user_model) -> None:
+    """Ops area should load for a staff user once authenticated."""
+    user = django_user_model.objects.create_user(
+        username="ops", password="pass1234", is_staff=True
+    )
+    # Force session auth to avoid relying on the login view behavior here.
+    client.force_login(user)
 
-#     resp = client.get("/ops/")
-#     assert resp.status_code == 200
+    resp = client.get("/ops/")
+    assert resp.status_code == 200
