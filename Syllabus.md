@@ -1,4 +1,4 @@
-# 💳 FinSight: Neo-Bank Transaction Categorisation & Fraud Risk Dashboard
+# 💳 LedgerGuard: Neo-Bank Transaction Categorisation & Fraud Risk Dashboard
 
 **Duration:** 4 Weeks (20 Lab Days, Mon–Fri)
 **Format:** Hands-on postgraduate programming lab
@@ -8,7 +8,7 @@
 
 ## 🎯 Course Overview
 
-Neo-banks need reliable spend categorisation and low-friction fraud detection to inform customers and protect revenue. This lab guides you through building **FinSight** — an end-to-end pipeline that auto-labels merchant transactions and assigns a fraud risk score, surfaced in a Django + Bootstrap review dashboard with exportable workflows and threshold analysis.
+Neo-banks need reliable spend categorisation and low-friction fraud detection to inform customers and protect revenue. This lab guides you through building **LedgerGuard** — an end-to-end pipeline that auto-labels merchant transactions and assigns a fraud risk score, surfaced in a Django + Bootstrap review dashboard with exportable workflows and threshold analysis.
 
 You’ll progress from a strict data contract and deterministic baselines to embedding-based classifiers, supervised fraud models, model insights (PR curves), and a deployed, reviewer-friendly tool with rules overlays and a feedback loop.
 
@@ -27,7 +27,7 @@ You’ll progress from a strict data contract and deterministic baselines to emb
 
 ## 🧪 Learning Outcomes
 
-By completing FinSight, you will be able to:
+By completing LedgerGuard, you will be able to:
 
 1. **Engineer reproducible ML pipelines** with deterministic text vectorisers, persisted artefacts, and a model registry.
 2. **Build categorisers and fraud detectors** (TF-IDF+LR → MiniLM+LightGBM; Isolation Forest → XGBoost) with imbalance handling.
