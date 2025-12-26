@@ -2,11 +2,15 @@
   <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
     <div class="d-flex align-items-center gap-2">
       <span class="fw-semibold">Transactions</span>
+
       {% if threshold %}
-        <span class="badge bg-secondary">Threshold: {{ threshold }}</span>
+        <span class="badge bg-secondary">Threshold {{ threshold }}</span>
       {% endif %}
+
       {% if view_meta %}
-        <span class="badge bg-light text-dark border">Visible: {{ view_meta.visible_count }}</span>
+        <span class="badge bg-light text-dark border">
+          Visible {{ view_meta.visible_count }}
+        </span>
       {% endif %}
     </div>
 
@@ -16,9 +20,10 @@
         type="search"
         class="form-control form-control-sm"
         style="max-width: 240px;"
-        placeholder="Search table"
+        placeholder="Search transactions"
         aria-label="Search transactions table"
       >
+
       {% if export_available %}
         <a class="btn btn-sm btn-outline-danger" href="{% url 'dashboard:export_flagged' %}">
           Export flagged
@@ -28,17 +33,17 @@
   </div>
 
   <div class="card-body table-responsive">
-    <table id="transactionsTable" class="table table-sm align-middle">
+    <table id="transactionsTable" class="table table-sm align-middle w-100">
       <thead>
         <tr>
-          <th>Timestamp</th>
+          <th class="text-nowrap">Timestamp</th>
           <th>Customer</th>
           <th>Merchant</th>
           <th>Description</th>
-          <th class="text-end">Amount</th>
+          <th class="text-end text-nowrap">Amount</th>
           <th>Category</th>
-          <th>Cat Conf</th>
-          <th>Fraud Risk</th>
+          <th class="text-nowrap">Cat Conf</th>
+          <th class="text-nowrap">Fraud Risk</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -46,11 +51,13 @@
       <tbody>
         {% for r in table %}
         <tr>
-          <td>{{ r.timestamp }}</td>
+          <td class="text-nowrap">{{ r.timestamp }}</td>
           <td>{{ r.customer_id }}</td>
           <td>{{ r.merchant }}</td>
-          <td class="text-truncate" style="max-width: 280px;">{{ r.description }}</td>
-          <td class="text-end">{{ r.amount }}</td>
+          <td class="text-truncate" style="max-width: 320px;">
+            {{ r.description }}
+          </td>
+          <td class="text-end text-nowrap">{{ r.amount }}</td>
           <td>{{ r.category }}</td>
           <td>{{ r.category_confidence }}</td>
           <td>{{ r.fraud_risk }}</td>
@@ -67,22 +74,3 @@
     </table>
   </div>
 </div>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const table = new DataTable('#transactionsTable', {
-      searchable: true,
-      perPage: 10,
-      labels: {
-        placeholder: "Search transactions...",
-        perPage: "{select} entries per page",
-        noRows: "No transactions found",
-        info: "Showing {start} to {end} of {rows} transactions"
-      }
-    });
-
-    const searchInput = document.getElementById('txSearch');
-    searchInput.addEventListener('input', function() {
-      table.search(this.value);
-    });
-  });
-</script> 
