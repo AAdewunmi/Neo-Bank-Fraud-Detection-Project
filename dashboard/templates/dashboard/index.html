@@ -2,7 +2,9 @@
 {% load static %}
 
 {% block content %}
+<!-- Page: Ops dashboard -->
 <div class="row g-3">
+  <!-- Section: left rail for upload + filters -->
   <aside class="col-md-4">
     <div class="card mb-3 shadow-sm">
       <div class="card-header">Upload and Controls</div>
@@ -10,12 +12,14 @@
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
 
+          <!-- Component: upload controls -->
           <div class="mb-3">
             <label class="form-label">CSV File</label>
             {{ form.csv_file }}
             <div class="form-text">Required: timestamp, amount, customer_id, merchant, description</div>
           </div>
 
+          <!-- Component: scoring threshold -->
           <div class="mb-3">
             <label class="form-label">Fraud threshold</label>
             {{ form.threshold }}
@@ -26,15 +30,18 @@
         </form>
 
         {% if error %}
+          <!-- Feedback: server-side validation issues -->
           <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
         {% endif %}
       </div>
     </div>
 
+    <!-- Section: filter controls (no re-score) -->
     <div class="card shadow-sm">
       <div class="card-header">Filters (no re-score)</div>
       <div class="card-body">
         <form method="get">
+          <!-- TODO: Persist last-used filters in session for multi-visit recall. -->
           <div class="form-check mb-3">
             {{ filter_form.flagged_only }}
             <label class="form-check-label">Flagged only</label>
@@ -73,12 +80,15 @@
     </div>
   </aside>
 
+  <!-- Section: main workspace content -->
   <section class="col-md-8">
     {% if table %}
+      <!-- Components: analytics + results -->
       {% include "dashboard/_kpis.html" %}
       {% include "dashboard/_transactions_table.html" %}
       {% include "dashboard/_model_insights.html" %}
     {% else %}
+      <!-- Empty state -->
       <div class="alert alert-info">
         Upload a CSV to validate the schema and run scoring.
       </div>

@@ -1,3 +1,4 @@
+<!-- Component: transactions table with client-side search -->
 <div class="card shadow-sm">
   <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
     <div class="d-flex align-items-center gap-2">
@@ -14,6 +15,7 @@
       {% endif %}
     </div>
 
+    <!-- Section: table toolbar -->
     <div class="d-flex gap-2 align-items-center">
       <input
         id="txSearch"
@@ -32,6 +34,7 @@
     </div>
   </div>
 
+  <!-- Section: table body -->
   <div class="card-body table-responsive">
     <table id="transactionsTable" class="table table-sm align-middle w-100">
       <thead>

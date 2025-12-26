@@ -4,21 +4,25 @@
 {% block title %}Ops Sign In{% endblock %}
 
 {% block content %}
+<!-- Page: ops login -->
 <div class="row justify-content-center">
   <div class="col-md-6 col-lg-5">
     <div class="card shadow-sm">
       <div class="card-body p-4">
+        <!-- Section: sign-in copy -->
         <h1 class="h4 mb-2">Ops Sign In</h1>
         <p class="text-body-secondary mb-4">
           Use an authorised staff account to access the Ops dashboard.
         </p>
 
         {% if form.errors %}
+          <!-- Feedback: authentication failure -->
           <div class="alert alert-danger" role="alert">
             Sign in failed. Check your username and password, then try again.
           </div>
         {% endif %}
 
+        <!-- Section: credentials form -->
         <form method="post" action="{% url 'login' %}">
           {% csrf_token %}
 
@@ -39,6 +43,7 @@
           <button class="btn btn-dark w-100" type="submit">Sign in</button>
         </form>
 
+        <!-- Section: secondary navigation -->
         <div class="d-flex justify-content-between mt-3 small">
           <a href="{% url 'public_home' %}">Back to home</a>
           <a href="{% url 'dashboard' %}">Open Ops dashboard</a>

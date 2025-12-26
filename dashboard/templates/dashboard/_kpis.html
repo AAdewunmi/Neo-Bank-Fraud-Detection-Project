@@ -1,6 +1,8 @@
+<!-- Component: KPI summary cards -->
 <div class="card mb-3 shadow-sm">
   <div class="card-header">KPIs</div>
   <div class="card-body">
+    <!-- Section: headline metrics -->
     <div class="row text-center">
       <div class="col">
         <div class="h6 text-muted">Transactions</div>
@@ -17,6 +19,7 @@
     </div>
 
     {% if run_meta %}
+      <!-- Section: run metadata -->
       <hr class="my-3">
       <div class="row g-2 small text-muted">
         <div class="col-md-6">
@@ -33,4 +36,3 @@
     {% endif %}
   </div>
 </div>
-

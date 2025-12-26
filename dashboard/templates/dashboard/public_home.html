@@ -1,11 +1,13 @@
 {% extends "dashboard/base.html" %}
 
 {% block content %}
+<!-- Page: public marketing overview -->
 <div class="row justify-content-center">
   <div class="col-lg-10">
     <div class="card shadow-sm">
       <div class="card-body p-4 p-lg-5">
         <div class="row align-items-center g-4">
+          <!-- Section: hero messaging -->
           <div class="col-lg-7">
             <h1 class="display-6 fw-semibold mb-2">LedgerGuard</h1>
             <p class="text-muted mb-3">
@@ -14,6 +16,7 @@
               and surface through review and export tools designed for audit.
             </p>
 
+            <!-- Section: primary calls to action -->
             <div class="d-flex flex-wrap gap-2">
               <a class="btn btn-dark" href="/ops/">Open Ops dashboard</a>
               <a class="btn btn-outline-secondary" href="/accounts/login/">Ops sign in</a>
@@ -21,6 +24,7 @@
 
             <hr class="my-4">
 
+            <!-- Section: feature bullets -->
             <div class="row g-3">
               <div class="col-md-4">
                 <div class="fw-semibold">Customer surface</div>
@@ -37,6 +41,7 @@
             </div>
           </div>
 
+          <!-- Section: platform intent panel -->
           <div class="col-lg-5">
             <div class="p-4 rounded-4 bg-light border">
               <div class="fw-semibold mb-2">Platform intent</div>
@@ -51,6 +56,7 @@
       </div>
     </div>
 
+    <!-- Footer note -->
     <div class="text-center text-muted small mt-3">
       Work in progress. Training grade neo-bank platform.
     </div>
