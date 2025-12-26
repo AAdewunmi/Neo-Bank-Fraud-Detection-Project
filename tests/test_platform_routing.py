@@ -11,11 +11,11 @@ def test_customer_home_ok(client) -> None:
     assert resp.status_code == 200
 
 
-# def test_ops_requires_login(client) -> None:
-#     """Ops area should redirect unauthenticated users to login."""
-#     resp = client.get("/ops/")
-#     assert resp.status_code == 302
-#     assert "/accounts/login/" in resp["Location"]
+def test_ops_requires_login(client) -> None:
+    """Ops area should redirect unauthenticated users to login."""
+    resp = client.get("/ops/")
+    assert resp.status_code == 302
+    assert "/accounts/login/" in resp["Location"]
 
 
 # def test_ops_ok_after_login(client, django_user_model) -> None:
