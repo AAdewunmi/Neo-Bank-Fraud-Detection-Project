@@ -6,6 +6,6 @@ sentence-transformers==2.6.1
 transformers==4.53.0
 torch==2.2.2
 
-lightgbm==4.5.0
+lightgbm==4.6.0
 matplotlib==3.9.2
 seaborn==0.12.2
