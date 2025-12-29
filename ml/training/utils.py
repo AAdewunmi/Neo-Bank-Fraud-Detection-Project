@@ -15,16 +15,27 @@ from typing import Any, Dict, Iterable
 
 def schema_hash(columns: Iterable[str]) -> str:
     """
-    Create a stable schema hash from an ordered list of column names.
+    Compute a stable hash for the model input schema.
 
-    Args:
-        columns: Ordered column names (order matters).
+    The caller should pass the exact ordered list of columns/features used by the trainer,
+    for example:
+      - list(text_cols) + [target_col]
+      - feature_names (fraud engineered feature list)
+
+    Normalisation:
+      - trims whitespace
+      - lowercases
 
     Returns:
-        Short SHA-256 prefix to store in registry and tests.
+      A SHA256 hex digest.
     """
-    joined = "|".join(columns)
-    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:12]
+    normalised = [str(c).strip().lower() for c in columns]
+    payload = json.dumps(
+        {"columns": normalised},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def load_registry(path: str | Path) -> Dict[str, Any]:
