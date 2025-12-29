@@ -1,0 +1,11 @@
+# requirements/ml.txt
+# Heavier ML dependencies used in Week 3 labs.
+# Keep these pinned, and install only when needed.
+
+sentence-transformers==3.0.1
+transformers==4.44.2
+torch==2.4.1
+
+lightgbm==4.5.0
+matplotlib==3.9.2
+seaborn==0.12.3
