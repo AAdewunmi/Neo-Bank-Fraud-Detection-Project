@@ -1,16 +1,18 @@
+# ml/training/utils.py
 """
-Training utilities for reproducibility:
-- stable schema hashing
-- model registry I/O
+Training utilities used across Week 1–3 labs.
 
-These are intentionally small. Week 1 goal is reliability, not a framework.
+Includes:
+- schema_hash: stable hashing of input column lists and feature lists
+- registry helpers: load_registry/save_registry for model_registry.json
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Iterable
 
 
 def schema_hash(columns: Iterable[str]) -> str:
@@ -38,31 +40,27 @@ def schema_hash(columns: Iterable[str]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def load_registry(path: str | Path) -> Dict[str, Any]:
+def load_registry(path: str | Path) -> dict[str, Any]:
     """
-    Load the model registry JSON, returning a default structure if missing.
-
-    Args:
-        path: Path to model_registry.json.
-
-    Returns:
-        Registry dictionary.
+    Load model_registry.json. If it does not exist, create a minimal structure.
     """
     p = Path(path)
     if not p.exists():
         return {"categorisation": {}, "fraud": {}}
-    return json.loads(p.read_text(encoding="utf-8"))
+
+    with p.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    data.setdefault("categorisation", {})
+    data.setdefault("fraud", {})
+    return data
 
 
-def save_registry(registry: Dict[str, Any], path: str | Path) -> None:
+def save_registry(registry: dict[str, Any], path: str | Path) -> None:
     """
-    Save registry JSON deterministically (sorted keys, stable formatting).
-
-    Args:
-        registry: Registry dictionary to persist.
-        path: Destination path.
+    Save model_registry.json with deterministic formatting.
     """
-    Path(path).write_text(
-        json.dumps(registry, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+    p = Path(path)
+    with p.open("w", encoding="utf-8") as f:
+        json.dump(registry, f, indent=2, sort_keys=True)
+        f.write("\n")
