@@ -1,0 +1,21 @@
+# .dockerignore
+.git
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.env
+.env.*
+
+artefacts/
+reports/
+data/
+
+.cache/
+.vscode/
+.DS_Store
+.idea/
+node_modules/
