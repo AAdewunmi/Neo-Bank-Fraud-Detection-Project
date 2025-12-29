@@ -3,7 +3,7 @@
 # Keep these pinned, and install only when needed.
 
 sentence-transformers==3.0.1
-transformers==4.44.2
+transformers==4.53.0
 torch==2.4.1
 
 lightgbm==4.5.0
