@@ -1,0 +1,6 @@
+# This file aggregates all the required dependencies for the project.
+# It includes base requirements, development tools, and machine learning libraries.
+
+-r requirements/base.txt
+-r requirements/dev.txt
+-r requirements/ml.txt
