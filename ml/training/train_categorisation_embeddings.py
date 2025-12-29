@@ -36,26 +36,52 @@ def main(args: argparse.Namespace) -> None:
     text_series = df[list(args.text_cols)].astype(str).agg(" ".join, axis=1)
     y = df[args.target_col].astype(str)
 
+    test_size = 0.2
+    test_count = max(1, int(round(len(y) * test_size)))
+    class_counts = y.value_counts()
+    can_stratify = (
+        len(class_counts) <= test_count
+        and (class_counts.min() if len(class_counts) else 0) >= 2
+    )
+    if not can_stratify:
+        print(
+            "[train_categorisation_embeddings] Disabling stratify: "
+            "not enough samples per class for the chosen test_size."
+        )
+
     X_train_text, X_test_text, y_train, y_test = train_test_split(
         text_series,
         y,
-        test_size=0.2,
+        test_size=test_size,
         random_state=42,
-        stratify=y,
+        stratify=y if can_stratify else None,
     )
 
     encoder = MiniLMEncoder(model_name=args.encoder_name, device="cpu")
     X_train = encoder.encode(X_train_text)
     X_test = encoder.encode(X_test_text)
 
-    clf = lgb.LGBMClassifier(
-        n_estimators=400,
-        learning_rate=0.05,
-        num_leaves=31,
-        subsample=0.9,
-        colsample_bytree=0.9,
-        random_state=42,
-    )
+    lgbm_params = {
+        "n_estimators": 400,
+        "learning_rate": 0.05,
+        "num_leaves": 31,
+        "subsample": 0.9,
+        "colsample_bytree": 0.9,
+        "random_state": 42,
+    }
+    if len(X_train) < 50:
+        lgbm_params.update(
+            {
+                "min_data_in_leaf": 1,
+                "min_data_in_bin": 1,
+            }
+        )
+        print(
+            "[train_categorisation_embeddings] Small dataset detected; "
+            "relaxing LightGBM min_data_in_leaf/min_data_in_bin."
+        )
+
+    clf = lgb.LGBMClassifier(**lgbm_params)
     clf.fit(X_train, y_train)
 
     y_pred = clf.predict(X_test)

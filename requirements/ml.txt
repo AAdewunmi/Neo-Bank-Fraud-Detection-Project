@@ -2,8 +2,8 @@
 # Heavier ML dependencies used in Week 3 labs.
 # Keep these pinned, and install only when needed.
 
-sentence-transformers==3.0.1
-transformers==4.44.2
+sentence-transformers==2.6.1
+transformers==4.38.2
 torch==2.2.2
 
 lightgbm==4.5.0

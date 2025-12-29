@@ -18,7 +18,33 @@
         "description"
       ]
     },
-    "latest": "cat_lr_20251216131937"
+    "cat_minilm_lgbm_20251229195737": {
+      "artefact": "artefacts/cat_minilm_lgbm_20251229195737.joblib",
+      "metrics": {
+        "macro_f1": 0.0
+      },
+      "schema_hash": "e06d3a602c00707bd067b45e6a05b1153efec9e6b0278bf718485f8805030acd",
+      "target_col": "category",
+      "text_cols": [
+        "merchant",
+        "description"
+      ],
+      "type": "embeddings_lightgbm"
+    },
+    "cat_minilm_lgbm_20251229200150": {
+      "artefact": "artefacts/cat_minilm_lgbm_20251229200150.joblib",
+      "metrics": {
+        "macro_f1": 0.5
+      },
+      "schema_hash": "e06d3a602c00707bd067b45e6a05b1153efec9e6b0278bf718485f8805030acd",
+      "target_col": "category",
+      "text_cols": [
+        "merchant",
+        "description"
+      ],
+      "type": "embeddings_lightgbm"
+    },
+    "latest": "cat_minilm_lgbm_20251229200150"
   },
   "fraud": {
     "fraud_if_20251217150855": {

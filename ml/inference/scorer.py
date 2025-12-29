@@ -78,7 +78,11 @@ class Scorer:
         artefact = self._load_artefact(entry["artefact"])
         return entry, artefact
 
-    def score(self, df: pd.DataFrame, categorisation_version: Optional[str] = None) -> pd.DataFrame:
+    def score(
+        self,
+        df: pd.DataFrame,
+        categorisation_version: Optional[str] = None,
+    ) -> pd.DataFrame:
         """
         Score a dataframe of transactions.
 
@@ -93,7 +97,11 @@ class Scorer:
         # Two modes:
         # - sklearn pipeline: model.predict(text_series) and predict_proba(text_series)
         # - embeddings_lightgbm artefact: {"model": LGBM, "encoder_name": "..."}
-        if isinstance(cat_model, dict) and "model" in cat_model and "encoder_name" in cat_model:
+        if (
+            isinstance(cat_model, dict)
+            and "model" in cat_model
+            and "encoder_name" in cat_model
+        ):
             encoder = self._get_encoder(cat_model["encoder_name"])
             X = np.asarray(
                 encoder.encode(
