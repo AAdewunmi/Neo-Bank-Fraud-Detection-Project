@@ -8,10 +8,10 @@ def test_schema_hash_is_stable_for_same_inputs() -> None:
     assert h1 == h2
 
 
-# def test_schema_hash_changes_when_columns_change() -> None:
-#     base = schema_hash(["merchant", "description", "category"])
-#     changed = schema_hash(["merchant", "description", "category", "amount"])
-#     assert base != changed
+def test_schema_hash_changes_when_columns_change() -> None:
+    base = schema_hash(["merchant", "description", "category"])
+    changed = schema_hash(["merchant", "description", "category", "amount"])
+    assert base != changed
 
 
 # def test_schema_hash_trims_and_normalises_columns() -> None:
