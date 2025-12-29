@@ -32,6 +32,8 @@ class Scorer:
     def __init__(self, registry_path: str = "model_registry.json") -> None:
         self._registry_path = registry_path
         self._reg = load_registry(registry_path)
+        # Backwards-compatible alias for tests/older code.
+        self._registry = self._reg
         self._artefact_cache: dict[str, Any] = {}
         self._encoder_cache: dict[str, Any] = {}
 
@@ -59,6 +61,13 @@ class Scorer:
         self._encoder_cache[encoder_name] = enc
         return enc
 
+    def _load(self, section: str, version: Optional[str] = None) -> Any:
+        """
+        Backwards-compatible loader used in older tests.
+        """
+        _, artefact = self._load_model(section, version)
+        return artefact
+
     def _load_model(
         self,
         section: str,
@@ -78,19 +87,39 @@ class Scorer:
         artefact = self._load_artefact(entry["artefact"])
         return entry, artefact
 
+    def _get_entry(
+        self,
+        section: str,
+        version: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """
+        Fetch a registry entry for a section + version.
+        """
+        if section not in self._reg:
+            raise KeyError(f"Registry missing section: {section}")
+
+        selected = version or self._reg[section].get("latest")
+        if not selected:
+            raise KeyError(f"No latest model set for section: {section}")
+
+        return self._reg[section][selected]
+
     def score(
         self,
         df: pd.DataFrame,
+        threshold: float,
         categorisation_version: Optional[str] = None,
-    ) -> pd.DataFrame:
+        fraud_version: Optional[str] = None,
+    ) -> tuple[pd.DataFrame, dict[str, Any]]:
         """
         Score a dataframe of transactions.
 
-        Returns a new dataframe with category and category_confidence fields added.
+        Returns a tuple of (scored dataframe, diagnostics dict).
         """
         out = df.copy()
 
-        cat_entry, cat_model = self._load_model("categorisation", categorisation_version)
+        cat_entry = self._get_entry("categorisation", categorisation_version)
+        cat_model = self._load("categorisation", categorisation_version)
         cat_cols = cat_entry["text_cols"]
         text_series = out[cat_cols].astype(str).agg(" ".join, axis=1)
 
@@ -122,6 +151,38 @@ class Scorer:
             else:
                 cat_conf = np.ones(len(out))
 
+        out["category"] = categories
         out["category_pred"] = categories
         out["category_confidence"] = cat_conf
-        return out
+
+        fraud_entry = self._get_entry("fraud", fraud_version)
+        fraud_model = self._load("fraud", fraud_version)
+        fraud_features = fraud_entry.get("features", ["amount"])
+        fraud_X = (
+            out[fraud_features]
+            .apply(pd.to_numeric, errors="coerce")
+            .fillna(0.0)
+        )
+
+        if hasattr(fraud_model, "decision_function"):
+            raw_scores = fraud_model.decision_function(fraud_X)
+        elif hasattr(fraud_model, "score_samples"):
+            raw_scores = fraud_model.score_samples(fraud_X)
+        else:
+            raise AttributeError("Fraud model missing decision_function/score_samples")
+
+        raw_scores = np.asarray(raw_scores, dtype=float)
+        fraud_risk = 1.0 / (1.0 + np.exp(raw_scores))
+        fraud_risk = np.clip(fraud_risk, 0.0, 1.0)
+        flagged = fraud_risk >= threshold
+
+        out["fraud_risk"] = fraud_risk
+        out["flagged"] = flagged
+
+        diags = {
+            "n": int(len(out)),
+            "threshold": float(threshold),
+            "pct_flagged": float(np.mean(flagged)) if len(out) else 0.0,
+        }
+
+        return out, diags
