@@ -2,7 +2,7 @@ name: NeoBank CI
 
 on:
   push:
-    branches: [ "main", "week1/**" ]
+    branches: [ "main"]
   pull_request:
   workflow_dispatch:
 
