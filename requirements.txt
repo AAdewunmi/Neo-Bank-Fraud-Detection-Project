@@ -15,6 +15,6 @@ factory_boy==3.3.0
 python-dotenv==1.0.1
 psycopg2-binary==2.9.9
 flake8==7.1.1
-coverage==7.6.4
+coverage==7.10.6
 black==24.10.0
 isort==5.12.0
