@@ -1,114 +1,119 @@
+# ml/inference/scorer.py
 """
-Unified scoring for categorisation + fraud baselines.
+Inference scorer for categorisation and fraud.
 
-Week 1 guarantee:
-- stable output contract for the dashboard layer
-- threshold monotonicity for fraud flagging
+Assumes model_registry.json provides:
+- categorisation.latest and categorisation[version]
+- fraud.latest and fraud[version] (if fraud scoring is enabled)
+
+This file adds:
+- support for embeddings_lightgbm categorisation artefacts
+- in-process cache for sentence-transformers encoders
 """
+
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
 from joblib import load
 
+from ml.training.utils import load_registry
+
 
 class Scorer:
     """
-    Load baseline models from a registry and score transactions.
+    Loads registered models and produces per-transaction scores.
 
-    The scorer caches loaded models in-memory to avoid repeated disk reads.
+    The scorer caches loaded artefacts and any embedding encoders so repeated calls stay fast.
     """
 
     def __init__(self, registry_path: str = "model_registry.json") -> None:
+        self._registry_path = registry_path
+        self._reg = load_registry(registry_path)
+        self._artefact_cache: dict[str, Any] = {}
+        self._encoder_cache: dict[str, Any] = {}
+
+    def _load_artefact(self, artefact_path: str) -> Any:
         """
-        Initialise a scorer with a registry path.
-
-        Args:
-            registry_path: Path to model registry JSON.
+        Load a joblib artefact with caching.
         """
-        self.registry_path = registry_path
-        self._registry = json.loads(Path(registry_path).read_text(encoding="utf-8"))
-        self._cache: Dict[str, Any] = {}
+        if artefact_path in self._artefact_cache:
+            return self._artefact_cache[artefact_path]
 
-    def _load(self, task: str, version: str | None) -> Any:
+        obj = load(artefact_path)
+        self._artefact_cache[artefact_path] = obj
+        return obj
+
+    def _get_encoder(self, encoder_name: str):
         """
-        Load a model artefact for a task/version from registry.
-
-        Args:
-            task: "categorisation" or "fraud"
-            version: specific version or None for latest
-
-        Returns:
-            Loaded model object.
+        Cache sentence-transformers encoders by name to avoid repeated heavyweight loads.
         """
-        resolved = version or self._registry[task]["latest"]
-        cache_key = f"{task}:{resolved}"
-        if cache_key in self._cache:
-            return self._cache[cache_key]
+        if encoder_name in self._encoder_cache:
+            return self._encoder_cache[encoder_name]
 
-        artefact_path = self._registry[task][resolved]["artefact"]
-        model = load(artefact_path)
-        self._cache[cache_key] = model
-        return model
+        from sentence_transformers import SentenceTransformer
 
-    def score(self, df: pd.DataFrame, threshold: float = 0.65) -> Tuple[pd.DataFrame,
-                                                                        Dict[str, Any]]:
+        enc = SentenceTransformer(encoder_name, device="cpu")
+        self._encoder_cache[encoder_name] = enc
+        return enc
+
+    def _load_model(
+        self,
+        section: str,
+        version: Optional[str] = None,
+    ) -> tuple[dict[str, Any], Any]:
         """
-        Score a dataframe and return outputs + diagnostics.
-
-        Required input columns:
-          - timestamp, amount, customer_id, merchant, description
-
-        Args:
-            df: Input transactions dataframe.
-            threshold: Fraud flag threshold in [0, 1] (higher -> fewer flags).
-
-        Returns:
-            (scored_df, diagnostics) where scored_df includes:
-              category, category_confidence, fraud_risk, flagged
+        Load a model entry and its artefact.
         """
-        cat_version = self._registry["categorisation"]["latest"]
-        frd_version = self._registry["fraud"]["latest"]
+        if section not in self._reg:
+            raise KeyError(f"Registry missing section: {section}")
 
-        cat_model = self._load("categorisation", cat_version)
-        frd_model = self._load("fraud", frd_version)
+        selected = version or self._reg[section].get("latest")
+        if not selected:
+            raise KeyError(f"No latest model set for section: {section}")
 
-        text_cols = self._registry["categorisation"][cat_version]["text_cols"]
-        text = df[text_cols].astype(str).agg(" ".join, axis=1)
+        entry = self._reg[section][selected]
+        artefact = self._load_artefact(entry["artefact"])
+        return entry, artefact
 
-        categories = cat_model.predict(text)
+    def score(self, df: pd.DataFrame, categorisation_version: Optional[str] = None) -> pd.DataFrame:
+        """
+        Score a dataframe of transactions.
 
-        if hasattr(cat_model, "predict_proba"):
-            confidence = cat_model.predict_proba(text).max(axis=1)
-        else:
-            # Baseline fallback: if no probabilities, treat as confident.
-            confidence = np.ones(len(df), dtype=float)
-
-        # IsolationForest: decision_function higher = more normal.
-        # Convert to risk where higher = more anomalous.
-        amt = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0).to_frame()
-        raw = frd_model.decision_function(amt)
-
-        raw_max = float(np.max(raw))
-        raw_min = float(np.min(raw))
-        denom = (raw_max - raw_min) + 1e-9
-        risk = (raw_max - raw) / denom
-
-        flagged = risk >= threshold
-
+        Returns a new dataframe with category and category_confidence fields added.
+        """
         out = df.copy()
-        out["category"] = categories
-        out["category_confidence"] = confidence
-        out["fraud_risk"] = np.round(risk, 4)
-        out["flagged"] = flagged
 
-        diagnostics = {
-            "n": int(len(df)),
-            "threshold": float(threshold),
-            "pct_flagged": float(np.mean(flagged)) if len(df) else 0.0,
-        }
-        return out, diagnostics
+        cat_entry, cat_model = self._load_model("categorisation", categorisation_version)
+        cat_cols = cat_entry["text_cols"]
+        text_series = out[cat_cols].astype(str).agg(" ".join, axis=1)
+
+        # Two modes:
+        # - sklearn pipeline: model.predict(text_series) and predict_proba(text_series)
+        # - embeddings_lightgbm artefact: {"model": LGBM, "encoder_name": "..."}
+        if isinstance(cat_model, dict) and "model" in cat_model and "encoder_name" in cat_model:
+            encoder = self._get_encoder(cat_model["encoder_name"])
+            X = np.asarray(
+                encoder.encode(
+                    list(text_series),
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                )
+            )
+            categories = cat_model["model"].predict(X)
+            if hasattr(cat_model["model"], "predict_proba"):
+                cat_conf = cat_model["model"].predict_proba(X).max(axis=1)
+            else:
+                cat_conf = np.ones(len(out))
+        else:
+            categories = cat_model.predict(text_series)
+            if hasattr(cat_model, "predict_proba"):
+                cat_conf = cat_model.predict_proba(text_series).max(axis=1)
+            else:
+                cat_conf = np.ones(len(out))
+
+        out["category_pred"] = categories
+        out["category_confidence"] = cat_conf
+        return out
