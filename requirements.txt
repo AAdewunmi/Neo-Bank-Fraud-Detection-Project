@@ -7,7 +7,7 @@ xgboost==2.1.1
 lightgbm==4.5.0
 imbalanced-learn==0.12.3
 sentence-transformers==2.6.1
-transformers==4.38.2
+transformers==4.53.0
 joblib==1.4.2
 matplotlib==3.9.2
 pytest==8.3.3
