@@ -1,15 +1,32 @@
-# tests/test_train_categorisation_embeddings_guard.py
+# tests/test_train_categorisation_guard.py
 from __future__ import annotations
 
 import argparse
+import importlib
+import sys
+import types
 
 import numpy as np
 import pandas as pd
 
-from ml.training import train_categorisation_embeddings as train_module
-
 
 def test_train_embeddings_relaxes_lightgbm_params_for_small_dataset(tmp_path, monkeypatch):
+    fake_sentence_transformers = types.ModuleType("sentence_transformers")
+
+    class FakeSentenceTransformer:
+        def __init__(self, name: str, device: str = "cpu") -> None:
+            self.name = name
+            self.device = device
+
+    fake_sentence_transformers.SentenceTransformer = FakeSentenceTransformer
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_sentence_transformers)
+
+    fake_lightgbm = types.ModuleType("lightgbm")
+    fake_lightgbm.LGBMClassifier = object
+    monkeypatch.setitem(sys.modules, "lightgbm", fake_lightgbm)
+
+    train_module = importlib.import_module("ml.training.train_categorisation_embeddings")
+
     class FakeEncoder:
         def __init__(self, model_name: str, device: str = "cpu") -> None:
             self.model_name = model_name
