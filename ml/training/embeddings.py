@@ -22,7 +22,11 @@ class MiniLMEncoder:
     - Returns a 2D numpy array of shape (n_samples, embedding_dim).
     """
 
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", device: str = "cpu") -> None:
+    def __init__(
+        self,
+        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+        device: str = "cpu",
+    ) -> None:
         self.model_name = model_name
         self.device = device
         self._model: Optional[SentenceTransformer] = None
