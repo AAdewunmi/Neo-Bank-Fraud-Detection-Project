@@ -31,10 +31,6 @@ from joblib import load
 from ml.training.utils import load_registry
 
 
-_ARTEFACT_CACHE: dict[str, Any] = {}
-_ENCODER_CACHE: dict[str, Any] = {}
-
-
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     """
     Numerically stable sigmoid for mapping scores to [0, 1].
@@ -153,8 +149,8 @@ class Scorer:
     """
     Loads registered models and produces per-transaction scores.
 
-    The scorer caches loaded artefacts and embedding encoders so repeated
-    calls stay fast.
+    The scorer caches loaded artefacts and embedding encoders per instance so
+    repeated calls stay fast.
     """
 
     def __init__(self, registry_path: str = "model_registry.json") -> None:
@@ -162,16 +158,18 @@ class Scorer:
         self._reg = load_registry(registry_path)
         # Backwards-compatible alias for tests/older code.
         self._registry = self._reg
+        self._artefact_cache: dict[str, Any] = {}
+        self._encoder_cache: dict[str, Any] = {}
 
     def _load_artefact(self, artefact_path: str) -> Any:
         """
-        Load a joblib artefact with process-level caching.
+        Load a joblib artefact with per-instance caching.
         """
-        if artefact_path in _ARTEFACT_CACHE:
-            return _ARTEFACT_CACHE[artefact_path]
+        if artefact_path in self._artefact_cache:
+            return self._artefact_cache[artefact_path]
 
         obj = load(artefact_path)
-        _ARTEFACT_CACHE[artefact_path] = obj
+        self._artefact_cache[artefact_path] = obj
         return obj
 
     def _get_encoder(self, encoder_name: str) -> Any:
@@ -181,8 +179,8 @@ class Scorer:
 
         Import is delayed so unit tests can run without ML dependencies installed.
         """
-        if encoder_name in _ENCODER_CACHE:
-            return _ENCODER_CACHE[encoder_name]
+        if encoder_name in self._encoder_cache:
+            return self._encoder_cache[encoder_name]
 
         import os
 
@@ -192,7 +190,7 @@ class Scorer:
         from sentence_transformers import SentenceTransformer
 
         enc = SentenceTransformer(encoder_name, device="cpu")
-        _ENCODER_CACHE[encoder_name] = enc
+        self._encoder_cache[encoder_name] = enc
         return enc
 
     def _load(self, section: str, version: Optional[str] = None) -> Any:

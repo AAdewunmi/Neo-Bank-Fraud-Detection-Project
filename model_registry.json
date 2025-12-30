@@ -91,6 +91,57 @@
       "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
       "type": "supervised_xgb"
     },
-    "latest": "fraud_xgb_20251230125032"
+    "fraud_xgb_20251230125236": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-73/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251230125236.joblib",
+      "features": [
+        "amount",
+        "is_international",
+        "hour",
+        "is_weekend",
+        "amount_bucket",
+        "velocity_24h"
+      ],
+      "metrics": {
+        "average_precision": 1.0,
+        "label_source": "supervised_is_fraud"
+      },
+      "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20251230130354": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-78/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251230130354.joblib",
+      "features": [
+        "amount",
+        "is_international",
+        "hour",
+        "is_weekend",
+        "amount_bucket",
+        "velocity_24h"
+      ],
+      "metrics": {
+        "average_precision": 1.0,
+        "label_source": "supervised_is_fraud"
+      },
+      "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20251230130454": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-81/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251230130454.joblib",
+      "features": [
+        "amount",
+        "is_international",
+        "hour",
+        "is_weekend",
+        "amount_bucket",
+        "velocity_24h"
+      ],
+      "metrics": {
+        "average_precision": 1.0,
+        "label_source": "supervised_is_fraud"
+      },
+      "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_20251230130454"
   }
 }
