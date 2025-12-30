@@ -1,0 +1,14 @@
+{
+  "average_precision": 0.9072279058486186,
+  "label_source": "synthetic_top_quantile_0.95",
+  "features": [
+    "amount",
+    "is_international",
+    "hour",
+    "is_weekend",
+    "amount_bucket",
+    "velocity_24h"
+  ],
+  "threshold_table_csv": "reports/fraud_xgb_20251230125032_thresholds.csv",
+  "metrics_version": "fraud_xgb_20251230125032"
+}

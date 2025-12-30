@@ -1,0 +1,14 @@
+{
+  "average_precision": 0.09247444236228725,
+  "label_source": "supervised_is_fraud",
+  "features": [
+    "amount",
+    "is_international",
+    "hour",
+    "is_weekend",
+    "amount_bucket",
+    "velocity_24h"
+  ],
+  "threshold_table_csv": "reports/fraud_xgb_20251230125006_thresholds.csv",
+  "metrics_version": "fraud_xgb_20251230125006"
+}

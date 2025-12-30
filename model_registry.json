@@ -57,6 +57,40 @@
       },
       "schema_hash": "cf38d95c9c6b"
     },
-    "latest": "fraud_if_20251217150855"
+    "fraud_xgb_20251230125006": {
+      "artefact": "artefacts/fraud_xgb_20251230125006.joblib",
+      "features": [
+        "amount",
+        "is_international",
+        "hour",
+        "is_weekend",
+        "amount_bucket",
+        "velocity_24h"
+      ],
+      "metrics": {
+        "average_precision": 0.09247444236228725,
+        "label_source": "supervised_is_fraud"
+      },
+      "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20251230125032": {
+      "artefact": "artefacts/fraud_xgb_20251230125032.joblib",
+      "features": [
+        "amount",
+        "is_international",
+        "hour",
+        "is_weekend",
+        "amount_bucket",
+        "velocity_24h"
+      ],
+      "metrics": {
+        "average_precision": 0.9072279058486186,
+        "label_source": "synthetic_top_quantile_0.95"
+      },
+      "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_20251230125032"
   }
 }
