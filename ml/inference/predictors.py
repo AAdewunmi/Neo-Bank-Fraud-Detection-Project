@@ -56,23 +56,23 @@ def _get_sentence_transformer(model_name: str) -> Any:
     return encoder
 
 
-# @dataclass
-# class SklearnTextPipelineCategoriser(TextCategoriser):
-#     """
-#     Adapter for sklearn text pipelines.
+@dataclass
+class SklearnTextPipelineCategoriser(TextCategoriser):
+    """
+    Adapter for sklearn text pipelines.
 
-#     Expects the wrapped object to expose predict(...) and optionally predict_proba(...).
-#     """
+    Expects the wrapped object to expose predict(...) and optionally predict_proba(...).
+    """
 
-#     pipeline: Any
+    pipeline: Any
 
-#     def predict_with_confidence(self, texts: Sequence[str]) -> Tuple[np.ndarray, np.ndarray]:
-#         labels = np.asarray(self.pipeline.predict(list(texts)))
-#         if hasattr(self.pipeline, "predict_proba"):
-#             proba = np.asarray(self.pipeline.predict_proba(list(texts)))
-#             conf = np.max(proba, axis=1)
-#             return labels, conf
-#         return labels, np.ones(len(labels), dtype=float)
+    def predict_with_confidence(self, texts: Sequence[str]) -> Tuple[np.ndarray, np.ndarray]:
+        labels = np.asarray(self.pipeline.predict(list(texts)))
+        if hasattr(self.pipeline, "predict_proba"):
+            proba = np.asarray(self.pipeline.predict_proba(list(texts)))
+            conf = np.max(proba, axis=1)
+            return labels, conf
+        return labels, np.ones(len(labels), dtype=float)
 
 
 # @dataclass
