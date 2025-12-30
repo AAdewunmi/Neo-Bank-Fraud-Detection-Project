@@ -75,59 +75,59 @@ class SklearnTextPipelineCategoriser(TextCategoriser):
         return labels, np.ones(len(labels), dtype=float)
 
 
-# @dataclass
-# class EmbeddingsLightGBMCategoriser(TextCategoriser):
-#     """
-#     Predictor for embeddings plus LightGBM categorisation.
+@dataclass
+class EmbeddingsLightGBMCategoriser(TextCategoriser):
+    """
+    Predictor for embeddings plus LightGBM categorisation.
 
-#     Stores only encoder_name and model.
-#     Encoder loads via a process-level cache.
-#     """
+    Stores only encoder_name and model.
+    Encoder loads via a process-level cache.
+    """
 
-#     model: Any
-#     encoder_name: str
+    model: Any
+    encoder_name: str
 
-#     def _embed(self, texts: Sequence[str]) -> np.ndarray:
-#         encoder = _get_sentence_transformer(self.encoder_name)
-#         vec = encoder.encode(list(texts), convert_to_numpy=True, normalize_embeddings=True)
-#         return np.asarray(vec)
+    def _embed(self, texts: Sequence[str]) -> np.ndarray:
+        encoder = _get_sentence_transformer(self.encoder_name)
+        vec = encoder.encode(list(texts), convert_to_numpy=True, normalize_embeddings=True)
+        return np.asarray(vec)
 
-#     def predict_with_confidence(self, texts: Sequence[str]) -> Tuple[np.ndarray, np.ndarray]:
-#         X = self._embed(texts)
-#         labels = np.asarray(self.model.predict(X))
-#         if hasattr(self.model, "predict_proba"):
-#             proba = np.asarray(self.model.predict_proba(X))
-#             conf = np.max(proba, axis=1)
-#             return labels, conf
-#         return labels, np.ones(len(labels), dtype=float)
-
-
-# def as_text_categoriser(artefact: Any) -> TextCategoriser:
-#     """
-#     Convert a loaded artefact into a TextCategoriser without changing scorer logic.
-
-#     Supported inputs
-#     - Objects already implementing predict_with_confidence(...)
-#     - sklearn pipelines with predict(...) and optional predict_proba(...)
-#     - Legacy dict artefacts from Day 1 embeddings trainer
-#       dict keys expected model and encoder_name
-#     """
-#     if hasattr(artefact, "predict_with_confidence"):
-#         return artefact
-
-#     if isinstance(artefact, dict) and "model" in artefact and "encoder_name" in artefact:
-#         return EmbeddingsLightGBMCategoriser(
-#             model=artefact["model"],
-#             encoder_name=str(artefact["encoder_name"]),
-#         )
-
-#     return SklearnTextPipelineCategoriser(pipeline=artefact)
+    def predict_with_confidence(self, texts: Sequence[str]) -> Tuple[np.ndarray, np.ndarray]:
+        X = self._embed(texts)
+        labels = np.asarray(self.model.predict(X))
+        if hasattr(self.model, "predict_proba"):
+            proba = np.asarray(self.model.predict_proba(X))
+            conf = np.max(proba, axis=1)
+            return labels, conf
+        return labels, np.ones(len(labels), dtype=float)
 
 
-# def sigmoid(x: np.ndarray) -> np.ndarray:
-#     """
-#     Numerically stable sigmoid for mapping margins to [0, 1].
-#     """
-#     x = np.asarray(x, dtype=float)
-#     x = np.clip(x, -50.0, 50.0)
-#     return 1.0 / (1.0 + np.exp(-x))
+def as_text_categoriser(artefact: Any) -> TextCategoriser:
+    """
+    Convert a loaded artefact into a TextCategoriser without changing scorer logic.
+
+    Supported inputs
+    - Objects already implementing predict_with_confidence(...)
+    - sklearn pipelines with predict(...) and optional predict_proba(...)
+    - Legacy dict artefacts from Day 1 embeddings trainer
+      dict keys expected model and encoder_name
+    """
+    if hasattr(artefact, "predict_with_confidence"):
+        return artefact
+
+    if isinstance(artefact, dict) and "model" in artefact and "encoder_name" in artefact:
+        return EmbeddingsLightGBMCategoriser(
+            model=artefact["model"],
+            encoder_name=str(artefact["encoder_name"]),
+        )
+
+    return SklearnTextPipelineCategoriser(pipeline=artefact)
+
+
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    """
+    Numerically stable sigmoid for mapping margins to [0, 1].
+    """
+    x = np.asarray(x, dtype=float)
+    x = np.clip(x, -50.0, 50.0)
+    return 1.0 / (1.0 + np.exp(-x))
