@@ -36,12 +36,12 @@ def _latest_metrics_path(reg: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-# def _copy_to_static(src: Path, static_dir: Path) -> None:
-#     """
-#     Copy a PNG into the configured static directory.
-#     """
-#     static_dir.mkdir(parents=True, exist_ok=True)
-#     shutil.copyfile(src, static_dir / src.name)
+def _copy_to_static(src: Path, static_dir: Path) -> None:
+    """
+    Copy a PNG into the configured static directory.
+    """
+    static_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, static_dir / src.name)
 
 
 # def main() -> None:
