@@ -1,98 +1,65 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
-
 {% block content %}
-<!-- Page: Ops dashboard -->
-<div class="row g-3">
-  <!-- Section: left rail for upload + filters -->
-  <aside class="col-md-4">
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header">Upload and Controls</div>
-      <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
 
-          <!-- Component: upload controls -->
-          <div class="mb-3">
-            <label class="form-label">CSV File</label>
-            {{ form.csv_file }}
-            <div class="form-text">Required: timestamp, amount, customer_id, merchant, description</div>
+<div class="container py-4">
+  <div class="row g-3">
+
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">Validate and score</div>
+        <div class="card-body">
+
+          {% if error %}
+          <div class="alert alert-danger mb-3">
+            {{ error }}
           </div>
+          {% endif %}
 
-          <!-- Component: scoring threshold -->
-          <div class="mb-3">
-            <label class="form-label">Fraud threshold</label>
-            {{ form.threshold }}
-            <div class="form-text">{{ form.threshold.help_text }}</div>
-          </div>
+          <form id="score-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-          <button class="btn btn-dark w-100" type="submit">Validate and score</button>
-        </form>
+            <div class="mb-3">
+              <label class="form-label">CSV file</label>
+              {{ form.file }}
+              <div class="form-text">Try data/sample_transactions.csv first.</div>
+            </div>
 
-        {% if error %}
-          <!-- Feedback: server-side validation issues -->
-          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
-        {% endif %}
+            <div class="mb-3">
+              <label class="form-label">Fraud threshold</label>
+              {{ form.threshold }}
+              <div class="form-text">Higher means fewer flags.</div>
+            </div>
+
+            <button id="score-submit" class="btn btn-dark w-100" type="submit">
+              Validate and score
+            </button>
+
+            <div id="score-progress" class="alert alert-info mt-3 mb-0 d-none">
+              Scoring in progress. Keep this tab open. First run may download the embedding model.
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+      <div class="mt-3">
+        {% include "dashboard/_model_insights.html" %}
       </div>
     </div>
 
-    <!-- Section: filter controls (no re-score) -->
-    <div class="card shadow-sm">
-      <div class="card-header">Filters (no re-score)</div>
-      <div class="card-body">
-        <form method="get">
-          <!-- TODO: Persist last-used filters in session for multi-visit recall. -->
-          <div class="form-check mb-3">
-            {{ filter_form.flagged_only }}
-            <label class="form-check-label">Flagged only</label>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Customer id</label>
-            {{ filter_form.customer_id }}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Merchant</label>
-            {{ filter_form.merchant }}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Category</label>
-            {{ filter_form.category }}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Min fraud risk</label>
-            {{ filter_form.min_fraud_risk }}
-          </div>
-
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark flex-fill" type="submit">Apply</button>
-            <a class="btn btn-outline-secondary flex-fill" href="/ops/">Reset</a>
-          </div>
-
-          <div class="form-text mt-2">
-            Filters apply to the last scored run stored in session.
-          </div>
-        </form>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Section: main workspace content -->
-  <section class="col-md-8">
-    {% if table %}
-      <!-- Components: analytics + results -->
+    <div class="col-lg-8">
       {% include "dashboard/_kpis.html" %}
-      {% include "dashboard/_transactions_table.html" %}
-      {% include "dashboard/_model_insights.html" %}
-    {% else %}
-      <!-- Empty state -->
-      <div class="alert alert-info">
-        Upload a CSV to validate the schema and run scoring.
+
+      <div class="mt-3">
+        {% include "dashboard/_transactions_table.html" %}
       </div>
-    {% endif %}
-  </section>
+
+      {# Backwards compatible include for older template versions #}
+      {# {% include "dashboard/_results_table.html" %} #}
+    </div>
+
+  </div>
 </div>
+
 {% endblock %}

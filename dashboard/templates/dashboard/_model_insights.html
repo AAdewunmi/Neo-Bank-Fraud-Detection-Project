@@ -1,47 +1,53 @@
+{% load static %}
 <!-- Component: model insights panel -->
+
 <div class="card">
   <div class="card-header">Model Notes</div>
   <div class="card-body">
+
     <p class="mb-2">
-      Latest model context and operational guidance.
+      Current stack summary for the dashboard scoring path.
     </p>
+
     <ul class="mb-0">
-      <li>Categorisation: TF-IDF and Logistic Regression, plus MiniLM embeddings with LightGBM where enabled</li>
-      <li>Fraud: Isolation Forest anomaly scoring for baseline, plus supervised XGBoost with PR-AUC metrics where enabled</li>
+      <li>Categorisation uses the registry latest model.</li>
+      <li>Fraud scoring uses the registry latest model and applies the threshold from the form.</li>
     </ul>
   </div>
 </div>
 
-<!-- Section: analyst guidance -->
 <div class="card mt-3">
-  <div class="card-header">Insights</div>
-  <div class="card-body">
-    <p class="mb-2">
-      Fraud threshold sets the trade off between queue size and queue quality.
-    </p>
-    <ul class="mb-0">
-      <li>Lower thresholds increase flagged volume and usually reduce precision.</li>
-      <li>Higher thresholds reduce flagged volume and usually reduce recall.</li>
-      <li>Use the plots below to pick a threshold based on the expected precision and recall.</li>
-    </ul>
-  </div>
-</div>
-
-<!-- Section: supervised fraud plots -->
-<div class="card mt-3">
-  <div class="card-header">Supervised Fraud Model Insights</div>
+  <div class="card-header">Model Insights</div>
   <div class="card-body">
     <p class="text-muted mb-3">
-      Precision recall curve and threshold trade offs generated from the latest supervised fraud metrics.
+      Precision recall and threshold trade offs for the latest supervised fraud run.
+      Generate these PNGs in artefacts and copy them into dashboard static artefacts.
     </p>
+
     <div class="row">
       <div class="col-md-6">
-        <img class="img-fluid rounded border" src="/static/artefacts/fraud_pr_curve.png" alt="Precision recall curve">
+        <img class="img-fluid rounded border"
+             src="{% static 'artefacts/fraud_pr_curve.png' %}"
+             alt="Precision recall curve">
       </div>
       <div class="col-md-6">
-        <img class="img-fluid rounded border" src="/static/artefacts/fraud_threshold_tradeoff.png" alt="Precision and recall vs threshold">
+        <img class="img-fluid rounded border"
+             src="{% static 'artefacts/fraud_threshold_tradeoff.png' %}"
+             alt="Precision and recall vs threshold">
       </div>
     </div>
   </div>
 </div>
 
+<div class="card mt-3">
+  <div class="card-header">Analyst guidance</div>
+  <div class="card-body">
+    <p class="mb-2">
+      Adjust the fraud threshold to see how it impacts flagged transactions.
+    </p>
+    <ul class="mb-0">
+      <li>Lower thresholds flag more transactions as potentially fraudulent.</li>
+      <li>Higher thresholds reduce false positives but may miss some fraud.</li>
+    </ul>
+  </div>
+</div>

@@ -1,38 +1,45 @@
 (function () {
-  "use strict";
-
-  // Component purpose: client-side enhancements for dashboard tables.
-
-  // Section: Table search filtering (lightweight, no backend calls).
-  function initTableSearch() {
-    var input = document.getElementById("txSearch");
-    var table = document.getElementById("transactionsTable");
-
-    if (!input || !table) {
-      return;
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn);
+    } else {
+      fn();
     }
-
-    var tbody = table.querySelector("tbody");
-    if (!tbody) {
-      return;
-    }
-
-    var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
-
-    // TODO: Debounce input for large tables.
-    input.addEventListener("input", function () {
-      var query = (input.value || "").toLowerCase().trim();
-
-      rows.forEach(function (row) {
-        var text = (row.textContent || "").toLowerCase();
-        row.style.display =
-          query === "" || text.indexOf(query) !== -1 ? "" : "none";
-      });
-    });
   }
 
-  // Section: Bootstrapping.
-  document.addEventListener("DOMContentLoaded", function () {
-    initTableSearch();
+  onReady(function () {
+    const form = document.getElementById("score-form");
+    const progress = document.getElementById("score-progress");
+    const submit = document.getElementById("score-submit");
+
+    if (!form) return;
+
+    form.addEventListener("submit", function () {
+      if (progress) {
+        progress.classList.remove("d-none");
+        progress.textContent =
+          "Scoring in progress... The first run may take up to a minute while models load.";
+      }
+      if (submit) {
+        submit.disabled = true;
+        submit.dataset.originalText = submit.innerText;
+        submit.innerText = "Scoring...";
+      }
+
+      // Watchdog: if nothing happens after 120s, reset UI
+      setTimeout(function () {
+        if (submit && submit.disabled) {
+          submit.disabled = false;
+          submit.innerText =
+            submit.dataset.originalText || "Validate and score";
+        }
+        if (progress) {
+          progress.classList.remove("alert-info");
+          progress.classList.add("alert-danger");
+          progress.textContent =
+            "This run took unusually long. If it keeps spinning, reload the page or lower CSV size.";
+        }
+      }, 120000); // 2 min fallback
+    });
   });
 })();

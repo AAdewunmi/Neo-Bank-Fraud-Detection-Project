@@ -82,3 +82,17 @@ def score_df(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str
     print(f"[LedgerGuard] score_df diagnostics: {diags}", flush=True)
 
     return scored_df, diags
+
+
+def read_csv_file(file_obj) -> pd.DataFrame:
+    """
+    Backwards-compatible alias for read_csv used by the dashboard view.
+    """
+    return read_csv(file_obj)
+
+
+def score_transactions(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """
+    Backwards-compatible alias for score_df used by the dashboard view.
+    """
+    return score_df(df, threshold)

@@ -35,6 +35,29 @@ class UploadForm(forms.Form):
     )
 
 
+class ScoreForm(forms.Form):
+    """
+    Dashboard scoring form aligned with template field names.
+
+    Fields:
+        file: CSV upload input.
+        threshold: Fraud threshold (0..1).
+    """
+
+    file = forms.FileField(
+        required=True,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".csv"}),
+    )
+    threshold = forms.FloatField(
+        required=True,
+        min_value=0.0,
+        max_value=1.0,
+        initial=0.7,
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+        help_text="0 to 1. Higher reduces false positives.",
+    )
+
+
 class FilterForm(forms.Form):
     """
     Filters applied to session-backed scored rows (no re-score).
