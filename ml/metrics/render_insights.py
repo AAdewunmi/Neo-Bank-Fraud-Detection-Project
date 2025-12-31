@@ -44,31 +44,31 @@ def _copy_to_static(src: Path, static_dir: Path) -> None:
     shutil.copyfile(src, static_dir / src.name)
 
 
-# def main() -> None:
-#     reg = load_registry("model_registry.json")
-#     metrics_path = _latest_metrics_path(reg)
+def main() -> None:
+    reg = load_registry("model_registry.json")
+    metrics_path = _latest_metrics_path(reg)
 
-#     if not metrics_path:
-#         print("No supervised fraud metrics found in registry.")
-#         print("Run the supervised fraud trainer first.")
-#         return
+    if not metrics_path:
+        print("No supervised fraud metrics found in registry.")
+        print("Run the supervised fraud trainer first.")
+        return
 
-#     artefacts = Path("artefacts")
-#     artefacts.mkdir(exist_ok=True)
+    artefacts = Path("artefacts")
+    artefacts.mkdir(exist_ok=True)
 
-#     pr_png = artefacts / "fraud_pr_curve.png"
-#     thr_png = artefacts / "fraud_threshold_tradeoff.png"
+    pr_png = artefacts / "fraud_pr_curve.png"
+    thr_png = artefacts / "fraud_threshold_tradeoff.png"
 
-#     pr_curve_from_metrics(metrics_path, str(pr_png))
-#     threshold_precision_recall(metrics_path, str(thr_png))
+    pr_curve_from_metrics(metrics_path, str(pr_png))
+    threshold_precision_recall(metrics_path, str(thr_png))
 
-#     static_dir = Path("neobank_site") / "static" / "artefacts"
-#     _copy_to_static(pr_png, static_dir)
-#     _copy_to_static(thr_png, static_dir)
+    static_dir = Path("neobank_site") / "static" / "artefacts"
+    _copy_to_static(pr_png, static_dir)
+    _copy_to_static(thr_png, static_dir)
 
-#     print(f"Wrote: {pr_png} and {thr_png}")
-#     print(f"Copied to static: {static_dir}")
+    print(f"Wrote: {pr_png} and {thr_png}")
+    print(f"Copied to static: {static_dir}")
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
