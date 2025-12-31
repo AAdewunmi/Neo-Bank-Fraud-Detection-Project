@@ -74,33 +74,33 @@ def _safe_stratify_split(
     )
 
 
-# def _time_split_indices(
-#     df: pd.DataFrame,
-#     timestamp_col: str,
-#     test_size: float,
-# ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
-#     """
-#     Time split by sorting timestamp ascending and taking the last fraction as test.
-#     """
-#     ts = pd.to_datetime(df[timestamp_col], errors="coerce", utc=True)
-#     valid = ts.notna().values
-#     if valid.sum() < 10:
-#         raise ValueError("Too few valid timestamps for time split.")
+def _time_split_indices(
+    df: pd.DataFrame,
+    timestamp_col: str,
+    test_size: float,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """
+    Time split by sorting timestamp ascending and taking the last fraction as test.
+    """
+    ts = pd.to_datetime(df[timestamp_col], errors="coerce", utc=True)
+    valid = ts.notna().values
+    if valid.sum() < 10:
+        raise ValueError("Too few valid timestamps for time split.")
 
-#     order = np.argsort(ts.values.astype("datetime64[ns]"))
-#     n = len(df)
-#     n_test = max(1, int(round(n * test_size)))
-#     test_idx = order[-n_test:]
-#     train_idx = order[:-n_test]
+    order = np.argsort(ts.values.astype("datetime64[ns]"))
+    n = len(df)
+    n_test = max(1, int(round(n * test_size)))
+    test_idx = order[-n_test:]
+    train_idx = order[:-n_test]
 
-#     meta = {
-#         "split_type": "time",
-#         "timestamp_col": timestamp_col,
-#         "n_total": int(n),
-#         "n_train": int(len(train_idx)),
-#         "n_test": int(len(test_idx)),
-#     }
-#     return np.asarray(train_idx), np.asarray(test_idx), meta
+    meta = {
+        "split_type": "time",
+        "timestamp_col": timestamp_col,
+        "n_total": int(n),
+        "n_train": int(len(train_idx)),
+        "n_test": int(len(test_idx)),
+    }
+    return np.asarray(train_idx), np.asarray(test_idx), meta
 
 
 # def _group_split_indices(
