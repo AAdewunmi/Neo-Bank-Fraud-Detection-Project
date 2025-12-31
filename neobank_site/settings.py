@@ -182,6 +182,28 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Static files configuration
+# - Adds optional static directories without failing when they do not exist.
+# - Optionally exposes the runtime-generated artefacts/ directory under /static/artefacts/ for local dev.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = []
+
+_static_dir = BASE_DIR / "static"
+if _static_dir.exists():
+    STATICFILES_DIRS.append(_static_dir)
+
+_project_static_dir = BASE_DIR / "neobank_site" / "static"
+if _project_static_dir.exists():
+    STATICFILES_DIRS.append(_project_static_dir)
+
+_artefacts_dir = BASE_DIR / "artefacts"
+if _artefacts_dir.exists():
+    STATICFILES_DIRS.append(("artefacts", _artefacts_dir))
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
