@@ -9,6 +9,7 @@ Week 1 intent:
 from __future__ import annotations
 
 import io
+import os
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
@@ -24,6 +25,63 @@ def _get_scorer() -> Scorer:
     if _SCORER is None:
         _SCORER = Scorer()
     return _SCORER
+
+
+def _engineer_fraud_features(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+
+    ts = pd.to_datetime(df.get("timestamp"), errors="coerce", utc=True)
+
+    if "hour" not in df.columns:
+        df["hour"] = ts.dt.hour.fillna(0).astype(int)
+
+    if "is_weekend" not in df.columns:
+        df["is_weekend"] = (ts.dt.weekday >= 5).fillna(False).astype(int)
+
+    if "amount_bucket" not in df.columns:
+        amounts = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0).astype(float)
+        df["amount_bucket"] = pd.cut(
+            amounts,
+            bins=[-1.0, 9.99, 99.99, 999.99, float("inf")],
+            labels=[0, 1, 2, 3],
+        ).astype(int)
+
+    if "velocity_24h" not in df.columns:
+        if "customer_id" in df.columns and ts.notna().any():
+            df["_ts"] = ts
+            df["_orig_idx"] = range(len(df))
+            df.sort_values(["customer_id", "_ts"], inplace=True)
+
+            def _rolling_count(group: pd.DataFrame) -> pd.Series:
+                s = pd.Series(1, index=group["_ts"])
+                counts = s.rolling("24h").sum().fillna(0).astype(int)
+                return pd.Series(counts.values, index=group.index)
+
+            df["velocity_24h"] = (
+                df.groupby("customer_id", sort=False, group_keys=False)
+                .apply(_rolling_count)
+                .astype(int)
+            )
+            df.sort_values("_orig_idx", inplace=True)
+            df.drop(columns=["_ts", "_orig_idx"], inplace=True)
+        else:
+            df["velocity_24h"] = 0
+
+    if "is_international" not in df.columns:
+        home_country = os.environ.get("LEDGERGUARD_HOME_COUNTRY")
+        home_currency = os.environ.get("LEDGERGUARD_HOME_CURRENCY")
+        if home_country and "country" in df.columns:
+            df["is_international"] = (
+                df["country"].astype(str).str.upper() != home_country.upper()
+            ).astype(int)
+        elif home_currency and "currency" in df.columns:
+            df["is_international"] = (
+                df["currency"].astype(str).str.upper() != home_currency.upper()
+            ).astype(int)
+        else:
+            df["is_international"] = 0
+
+    return df
 
 
 def read_csv(file_obj) -> pd.DataFrame:
@@ -55,7 +113,7 @@ def read_csv(file_obj) -> pd.DataFrame:
     if (df["customer_id"].str.len() == 0).any():
         raise ValueError("customer_id must be non-empty for all rows")
 
-    return df
+    return _engineer_fraud_features(df)
 
 
 def score_df(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str, Any]]:
