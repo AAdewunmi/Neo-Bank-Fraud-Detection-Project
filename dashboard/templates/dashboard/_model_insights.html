@@ -1,21 +1,6 @@
 {% load static %}
 <!-- Component: model insights panel -->
 
-<div class="card">
-  <div class="card-header">Model Notes</div>
-  <div class="card-body">
-
-    <p class="mb-2">
-      Current stack summary for the dashboard scoring path.
-    </p>
-
-    <ul class="mb-0">
-      <li>Categorisation uses the registry latest model.</li>
-      <li>Fraud scoring uses the registry latest model and applies the threshold from the form.</li>
-    </ul>
-  </div>
-</div>
-
 <div class="card mt-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span>Model Insights</span>
@@ -41,18 +26,5 @@
              alt="Precision and recall vs threshold">
       </div>
     </div>
-  </div>
-</div>
-
-<div class="card mt-3">
-  <div class="card-header">Analyst guidance</div>
-  <div class="card-body">
-    <p class="mb-2">
-      Adjust the fraud threshold to see how it impacts flagged transactions.
-    </p>
-    <ul class="mb-0">
-      <li>Lower thresholds flag more transactions as potentially fraudulent.</li>
-      <li>Higher thresholds reduce false positives but may miss some fraud.</li>
-    </ul>
   </div>
 </div>
