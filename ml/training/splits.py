@@ -103,28 +103,28 @@ def _time_split_indices(
     return np.asarray(train_idx), np.asarray(test_idx), meta
 
 
-# def _group_split_indices(
-#     df: pd.DataFrame,
-#     group_col: str,
-#     test_size: float,
-#     seed: int,
-# ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
-#     """
-#     Group split so the same group does not appear in both train and test.
-#     """
-#     groups = df[group_col].astype(str).values
-#     splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
-#     train_idx, test_idx = next(splitter.split(df, groups=groups))
+def _group_split_indices(
+    df: pd.DataFrame,
+    group_col: str,
+    test_size: float,
+    seed: int,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """
+    Group split so the same group does not appear in both train and test.
+    """
+    groups = df[group_col].astype(str).values
+    splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
+    train_idx, test_idx = next(splitter.split(df, groups=groups))
 
-#     meta = {
-#         "split_type": "group",
-#         "group_col": group_col,
-#         "n_total": int(len(df)),
-#         "n_train": int(len(train_idx)),
-#         "n_test": int(len(test_idx)),
-#         "n_groups": int(pd.Series(groups).nunique()),
-#     }
-#     return np.asarray(train_idx), np.asarray(test_idx), meta
+    meta = {
+        "split_type": "group",
+        "group_col": group_col,
+        "n_total": int(len(df)),
+        "n_train": int(len(train_idx)),
+        "n_test": int(len(test_idx)),
+        "n_groups": int(pd.Series(groups).nunique()),
+    }
+    return np.asarray(train_idx), np.asarray(test_idx), meta
 
 
 # def _leakage_guard_remove_overlap(
