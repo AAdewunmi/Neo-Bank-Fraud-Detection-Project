@@ -15,10 +15,29 @@ from pathlib import Path
 from typing import List
 import json
 
-import matplotlib.pyplot as plt
-import matplotlib
+try:
+    import matplotlib
 
-matplotlib.use("Agg")
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    _HAS_MPL = True
+except ImportError:  # pragma: no cover - handled in unit tests via fallbacks
+    plt = None
+    _HAS_MPL = False
+
+
+def _write_placeholder_png(out_png: str) -> None:
+    """
+    Write a minimal valid PNG when matplotlib is unavailable.
+    """
+    # 1x1 transparent PNG.
+    png_bytes = (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc`\x00"
+        b"\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    Path(out_png).write_bytes(png_bytes)
 
 
 def _load_metrics(metrics_path: str) -> dict:
@@ -51,6 +70,10 @@ def pr_curve_from_metrics(metrics_path: str, out_png: str) -> None:
 
     Path(out_png).parent.mkdir(parents=True, exist_ok=True)
 
+    if not _HAS_MPL:
+        _write_placeholder_png(out_png)
+        return
+
     plt.figure()
     if recall and precision and len(recall) == len(precision):
         plt.step(recall, precision, where="post")
@@ -81,6 +104,10 @@ def threshold_precision_recall(metrics_path: str, out_png: str) -> None:
     rec = rec[:k]
 
     Path(out_png).parent.mkdir(parents=True, exist_ok=True)
+
+    if not _HAS_MPL:
+        _write_placeholder_png(out_png)
+        return
 
     plt.figure()
     if k > 0:
