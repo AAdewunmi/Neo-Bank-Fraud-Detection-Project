@@ -127,70 +127,70 @@ def _group_split_indices(
     return np.asarray(train_idx), np.asarray(test_idx), meta
 
 
-# def _leakage_guard_remove_overlap(
-#     df: pd.DataFrame,
-#     train_idx: np.ndarray,
-#     test_idx: np.ndarray,
-#     group_col: str,
-# ) -> Tuple[np.ndarray, Dict[str, Any]]:
-#     """
-#     Remove any train rows that share a group with the test set.
+def _leakage_guard_remove_overlap(
+    df: pd.DataFrame,
+    train_idx: np.ndarray,
+    test_idx: np.ndarray,
+    group_col: str,
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """
+    Remove any train rows that share a group with the test set.
 
-#     This is useful when a time split is used but customers appear in both windows.
-#     """
-#     train_groups = set(df.iloc[train_idx][group_col].astype(str).tolist())
-#     test_groups = set(df.iloc[test_idx][group_col].astype(str).tolist())
-#     overlap = train_groups.intersection(test_groups)
+    This is useful when a time split is used but customers appear in both windows.
+    """
+    train_groups = set(df.iloc[train_idx][group_col].astype(str).tolist())
+    test_groups = set(df.iloc[test_idx][group_col].astype(str).tolist())
+    overlap = train_groups.intersection(test_groups)
 
-#     if not overlap:
-#         return train_idx, {"leakage_guard": "none", "overlap_groups": 0}
+    if not overlap:
+        return train_idx, {"leakage_guard": "none", "overlap_groups": 0}
 
-#     keep_mask = ~df.iloc[train_idx][group_col].astype(str).isin(overlap).values
-#     filtered_train_idx = train_idx[keep_mask]
+    keep_mask = ~df.iloc[train_idx][group_col].astype(str).isin(overlap).values
+    filtered_train_idx = train_idx[keep_mask]
 
-#     meta = {
-#         "leakage_guard": "removed_overlap_groups",
-#         "overlap_groups": int(len(overlap)),
-#         "train_removed_rows": int(len(train_idx) - len(filtered_train_idx)),
-#     }
-#     return filtered_train_idx, meta
+    meta = {
+        "leakage_guard": "removed_overlap_groups",
+        "overlap_groups": int(len(overlap)),
+        "train_removed_rows": int(len(train_idx) - len(filtered_train_idx)),
+    }
+    return filtered_train_idx, meta
 
 
-# def split_train_test(
-#     df: pd.DataFrame,
-#     y: np.ndarray,
-#     test_size: float = 0.25,
-#     seed: int = 42,
-#     split_mode: str = "time",
-#     timestamp_col: str = "timestamp",
-#     group_col: str = "customer_id",
-#     leakage_guard: bool = True,
-# ) -> SplitResult:
-#     """
-#     Split indices for training and testing.
+def split_train_test(
+    df: pd.DataFrame,
+    y: np.ndarray,
+    test_size: float = 0.25,
+    seed: int = 42,
+    split_mode: str = "time",
+    timestamp_col: str = "timestamp",
+    group_col: str = "customer_id",
+    leakage_guard: bool = True,
+) -> SplitResult:
+    """
+    Split indices for training and testing.
 
-#     split_mode options
-#     - time uses timestamp ordering
-#     - group uses customer id grouping
-#     - random uses a safe stratified split when possible
+    split_mode options
+    - time uses timestamp ordering
+    - group uses customer id grouping
+    - random uses a safe stratified split when possible
 
-#     leakage_guard removes overlapping customer ids from the training set after time split.
-#     """
-#     split_mode = split_mode.strip().lower()
+    leakage_guard removes overlapping customer ids from the training set after time split.
+    """
+    split_mode = split_mode.strip().lower()
 
-#     if split_mode == "time" and timestamp_col in df.columns:
-#         train_idx, test_idx, meta = _time_split_indices(df, timestamp_col, test_size)
-#         if leakage_guard and group_col in df.columns:
-#             train_idx, guard_meta = _leakage_guard_remove_overlap(
-#                 df, train_idx, test_idx, group_col
-#             )
-#             meta.update(guard_meta)
-#             meta["n_train"] = int(len(train_idx))
-#         return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
+    if split_mode == "time" and timestamp_col in df.columns:
+        train_idx, test_idx, meta = _time_split_indices(df, timestamp_col, test_size)
+        if leakage_guard and group_col in df.columns:
+            train_idx, guard_meta = _leakage_guard_remove_overlap(
+                df, train_idx, test_idx, group_col
+            )
+            meta.update(guard_meta)
+            meta["n_train"] = int(len(train_idx))
+        return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
 
-#     if split_mode == "group" and group_col in df.columns:
-#         train_idx, test_idx, meta = _group_split_indices(df, group_col, test_size, seed)
-#         return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
+    if split_mode == "group" and group_col in df.columns:
+        train_idx, test_idx, meta = _group_split_indices(df, group_col, test_size, seed)
+        return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
 
-#     train_idx, test_idx, meta = _safe_stratify_split(y=y, test_size=test_size, seed=seed)
-#     return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
+    train_idx, test_idx, meta = _safe_stratify_split(y=y, test_size=test_size, seed=seed)
+    return SplitResult(train_idx=train_idx, test_idx=test_idx, meta=meta)
