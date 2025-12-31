@@ -184,7 +184,8 @@ STATIC_URL = "static/"
 
 # Static files configuration
 # - Adds optional static directories without failing when they do not exist.
-# - Optionally exposes the runtime-generated artefacts/ directory under /static/artefacts/ for local dev.
+# - Optionally exposes the runtime-generated artefacts/ directory
+# under /static/artefacts/ for local dev.
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = []

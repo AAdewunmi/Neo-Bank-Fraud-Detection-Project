@@ -142,7 +142,58 @@
       "schema_hash": "445cfeaf32f8ebc695da1f5b79a32fae1bde712dc52d963aacecbd89cb163d28",
       "type": "supervised_xgb"
     },
-    "latest": "fraud_xgb_20251230130454"
+    "fraud_xgb_20251231181456": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-86/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181456.joblib",
+      "features": [
+        "amount"
+      ],
+      "label_mode": "real",
+      "metrics": {
+        "average_precision": 0.990909090909091,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-86/test_trainer_writes_metrics_an0/reports/fraud_xgb_20251231181456_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-86/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181456_model_card.md",
+      "schema_hash": "85f0e896ad6e26b96a6f3ec6bbd642b0b923443537f1db3891e9c68e8be4a8b6",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20251231181716": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-88/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181716.joblib",
+      "features": [
+        "amount"
+      ],
+      "label_mode": "real",
+      "metrics": {
+        "average_precision": 0.990909090909091,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-88/test_trainer_writes_metrics_an0/reports/fraud_xgb_20251231181716_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-88/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181716_model_card.md",
+      "schema_hash": "85f0e896ad6e26b96a6f3ec6bbd642b0b923443537f1db3891e9c68e8be4a8b6",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20251231181808": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-90/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181808.joblib",
+      "features": [
+        "amount"
+      ],
+      "label_mode": "real",
+      "metrics": {
+        "average_precision": 0.990909090909091,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-90/test_trainer_writes_metrics_an0/reports/fraud_xgb_20251231181808_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-90/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20251231181808_model_card.md",
+      "schema_hash": "85f0e896ad6e26b96a6f3ec6bbd642b0b923443537f1db3891e9c68e8be4a8b6",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_20251231181808"
   },
   "fraud_synthetic": {
     "fraud_xgb_synth_20251231172209": {
@@ -161,6 +212,23 @@
       "synthetic": true,
       "type": "supervised_xgb"
     },
-    "latest": "fraud_xgb_synth_20251231172209"
+    "fraud_xgb_synth_20251231181614": {
+      "artefact": "artefacts/fraud_xgb_synth_20251231181614.joblib",
+      "features": [
+        "amount"
+      ],
+      "label_mode": "synthetic_top_amount_quantile",
+      "metrics": {
+        "average_precision": 0.9955663497312939,
+        "label_source": "synthetic_top_quantile_0.95"
+      },
+      "metrics_path": "reports/fraud_xgb_synth_20251231181614_metrics.json",
+      "model_card": "artefacts/fraud_xgb_synth_20251231181614_model_card.md",
+      "schema_hash": "85f0e896ad6e26b96a6f3ec6bbd642b0b923443537f1db3891e9c68e8be4a8b6",
+      "split_type": "time",
+      "synthetic": true,
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_synth_20251231181614"
   }
 }

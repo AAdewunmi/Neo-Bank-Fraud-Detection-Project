@@ -84,8 +84,8 @@ def _time_split_indices(
     """
     ts = pd.to_datetime(df[timestamp_col], errors="coerce", utc=True)
     valid = ts.notna().values
-    if valid.sum() < 10:
-        raise ValueError("Too few valid timestamps for time split.")
+    if valid.sum() == 0:
+        raise ValueError("No valid timestamps for time split.")
 
     order = np.argsort(ts.values.astype("datetime64[ns]"))
     n = len(df)

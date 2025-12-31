@@ -1,0 +1,57 @@
+{
+  "average_precision": 0.9955663497312939,
+  "label_source": "synthetic_top_quantile_0.95",
+  "label_mode": "synthetic_top_amount_quantile",
+  "synthetic": true,
+  "label_meta": {
+    "label_mode": "synthetic_top_amount_quantile",
+    "positive_quantile": 0.95,
+    "threshold_amount": 107.79149999999998,
+    "positive_rate": 0.05
+  },
+  "split_meta": {
+    "split_type": "time",
+    "timestamp_col": "timestamp",
+    "n_total": 25000,
+    "n_train": 89,
+    "n_test": 6250,
+    "leakage_guard": "removed_overlap_groups",
+    "overlap_groups": 1194,
+    "train_removed_rows": 18661
+  },
+  "n_train": 89,
+  "n_test": 6250,
+  "positive_rate_train": 0.07865168539325842,
+  "positive_rate_test": 0.0472,
+  "features": [
+    "amount"
+  ],
+  "thresholds": [
+    0.012315690517425537,
+    0.039912912994623184,
+    0.9871698617935181
+  ],
+  "precision": [
+    0.899390243902439,
+    1.0,
+    1.0
+  ],
+  "recall": [
+    1.0,
+    0.9559322033898305,
+    0.0
+  ],
+  "precision_curve": [
+    0.0472,
+    0.899390243902439,
+    1.0,
+    1.0
+  ],
+  "recall_curve": [
+    1.0,
+    1.0,
+    0.9559322033898305,
+    0.0
+  ],
+  "threshold_table_csv": "reports/fraud_xgb_synth_20251231181614_thresholds.csv"
+}
