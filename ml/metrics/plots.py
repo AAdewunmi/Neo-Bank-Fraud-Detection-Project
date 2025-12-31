@@ -64,34 +64,34 @@ def pr_curve_from_metrics(metrics_path: str, out_png: str) -> None:
     plt.close()
 
 
-# def threshold_precision_recall(metrics_path: str, out_png: str) -> None:
-#     """
-#     Render precision and recall vs threshold PNG.
+def threshold_precision_recall(metrics_path: str, out_png: str) -> None:
+    """
+    Render precision and recall vs threshold PNG.
 
-#     Expects thresholds, precision, recall arrays aligned to the same length.
-#     """
-#     m = _load_metrics(metrics_path)
-#     thr = _series(m, "thresholds")
-#     prec = _series(m, "precision")
-#     rec = _series(m, "recall")
+    Expects thresholds, precision, recall arrays aligned to the same length.
+    """
+    m = _load_metrics(metrics_path)
+    thr = _series(m, "thresholds")
+    prec = _series(m, "precision")
+    rec = _series(m, "recall")
 
-#     k = min(len(thr), len(prec), len(rec))
-#     thr = thr[:k]
-#     prec = prec[:k]
-#     rec = rec[:k]
+    k = min(len(thr), len(prec), len(rec))
+    thr = thr[:k]
+    prec = prec[:k]
+    rec = rec[:k]
 
-#     Path(out_png).parent.mkdir(parents=True, exist_ok=True)
+    Path(out_png).parent.mkdir(parents=True, exist_ok=True)
 
-#     plt.figure()
-#     if k > 0:
-#         plt.plot(thr, prec, label="Precision")
-#         plt.plot(thr, rec, label="Recall")
-#         plt.legend()
-#     else:
-#         plt.text(0.1, 0.5, "Threshold data unavailable", fontsize=12)
-#     plt.xlabel("Threshold")
-#     plt.ylabel("Score")
-#     plt.title("Precision and Recall vs Threshold")
-#     plt.tight_layout()
-#     plt.savefig(out_png, dpi=144)
-#     plt.close()
+    plt.figure()
+    if k > 0:
+        plt.plot(thr, prec, label="Precision")
+        plt.plot(thr, rec, label="Recall")
+        plt.legend()
+    else:
+        plt.text(0.1, 0.5, "Threshold data unavailable", fontsize=12)
+    plt.xlabel("Threshold")
+    plt.ylabel("Score")
+    plt.title("Precision and Recall vs Threshold")
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=144)
+    plt.close()
