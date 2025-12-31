@@ -2,28 +2,46 @@
 <div class="card">
   <div class="card-header">Model Notes</div>
   <div class="card-body">
-    <!-- Section: brief model overview -->
-    <!-- TODO: Replace placeholder with model training notes pulled from metadata. -->
     <p class="mb-2">
-      
+      Latest model context and operational guidance.
     </p>
-    <!-- Section: model stack summary -->
     <ul class="mb-0">
-      <li>Categorisation: TF-IDF and Logistic Regression</li>
-      <li>Fraud: Isolation Forest anomaly scoring mapped to a 0 to 1 risk</li>
+      <li>Categorisation: TF-IDF and Logistic Regression, plus MiniLM embeddings with LightGBM where enabled</li>
+      <li>Fraud: Isolation Forest anomaly scoring for baseline, plus supervised XGBoost with PR-AUC metrics where enabled</li>
     </ul>
   </div>
 </div>
+
 <!-- Section: analyst guidance -->
 <div class="card mt-3">
   <div class="card-header">Insights</div>
   <div class="card-body">
     <p class="mb-2">
-      Adjust the fraud threshold to see how it impacts flagged transactions.
+      Fraud threshold sets the trade off between queue size and queue quality.
     </p>
     <ul class="mb-0">
-      <li>Lower thresholds flag more transactions as potentially fraudulent.</li>
-      <li>Higher thresholds reduce false positives but may miss some fraud.</li>
+      <li>Lower thresholds increase flagged volume and usually reduce precision.</li>
+      <li>Higher thresholds reduce flagged volume and usually reduce recall.</li>
+      <li>Use the plots below to pick a threshold based on the expected precision and recall.</li>
     </ul>
   </div>
 </div>
+
+<!-- Section: supervised fraud plots -->
+<div class="card mt-3">
+  <div class="card-header">Supervised Fraud Model Insights</div>
+  <div class="card-body">
+    <p class="text-muted mb-3">
+      Precision recall curve and threshold trade offs generated from the latest supervised fraud metrics.
+    </p>
+    <div class="row">
+      <div class="col-md-6">
+        <img class="img-fluid rounded border" src="/static/artefacts/fraud_pr_curve.png" alt="Precision recall curve">
+      </div>
+      <div class="col-md-6">
+        <img class="img-fluid rounded border" src="/static/artefacts/fraud_threshold_tradeoff.png" alt="Precision and recall vs threshold">
+      </div>
+    </div>
+  </div>
+</div>
+
