@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List, Mapping
 
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 
 from dashboard.decorators import ops_access_required
-from dashboard.forms import ScoreForm
-from dashboard.services import read_csv_file, score_transactions
+from dashboard.forms import FilterForm, UploadForm
+from dashboard import services
 from dashboard.session_store import (
     build_scored_run,
     load_scored_run,
@@ -35,28 +35,41 @@ def public_home(request: HttpRequest) -> HttpResponse:
 @ops_access_required
 def index(request: HttpRequest) -> HttpResponse:
     stored_run = load_scored_run(request.session)
+    table_rows: List[Mapping[str, Any]] = stored_run.rows if stored_run else []
+    run_meta = stored_run.run_meta if stored_run else {}
+
+    filtered_rows, view_meta = _apply_filters(
+        request, table_rows, run_meta.get("flagged_key", "flagged")
+    )
 
     context: Dict[str, Any] = {
-        "form": ScoreForm(),
+        "form": UploadForm(),
+        "filter_form": FilterForm(request.GET or None),
         "run": stored_run,
-        "has_results": bool(stored_run.rows),
+        "has_results": bool(table_rows),
+        "table": list(filtered_rows),
+        "view_meta": view_meta,
+        "run_meta": run_meta,
+        "threshold": run_meta.get("threshold"),
+        "export_available": bool(table_rows),
+        "kpi": _build_kpis(run_meta),
         "error": None,
     }
 
     if request.method == "POST":
-        form = ScoreForm(request.POST, request.FILES)
+        form = UploadForm(request.POST, request.FILES)
         context["form"] = form
 
         if not form.is_valid():
             context["error"] = "Invalid form input."
             return render(request, "dashboard/index.html", context)
 
-        uploaded = form.cleaned_data["file"]
+        uploaded = form.cleaned_data["csv_file"]
         threshold = float(form.cleaned_data["threshold"])
 
         try:
-            df = read_csv_file(uploaded)
-            scored_df, diags = score_transactions(df=df, threshold=threshold)
+            df = services.read_csv(uploaded)
+            scored_df, diags = services.score_df(df=df, threshold=threshold)
 
             diags_payload = {
                 "threshold": float(threshold),
@@ -92,7 +105,24 @@ def index(request: HttpRequest) -> HttpResponse:
             )
 
             save_scored_run(request.session, scored_run)
-            return redirect("dashboard:index")
+            filtered_rows, view_meta = _apply_filters(
+                request,
+                scored_run.rows,
+                scored_run.run_meta.get("flagged_key", "flagged"),
+            )
+            context.update(
+                {
+                    "run": scored_run,
+                    "has_results": bool(scored_run.rows),
+                    "table": list(filtered_rows),
+                    "view_meta": view_meta,
+                    "run_meta": scored_run.run_meta,
+                    "threshold": scored_run.run_meta.get("threshold"),
+                    "export_available": bool(scored_run.rows),
+                    "kpi": _build_kpis(scored_run.run_meta),
+                }
+            )
+            return render(request, "dashboard/index.html", context)
 
         except Exception as exc:
             logger.exception("Scoring failed")
@@ -100,3 +130,67 @@ def index(request: HttpRequest) -> HttpResponse:
             return render(request, "dashboard/index.html", context)
 
     return render(request, "dashboard/index.html", context)
+
+
+def _apply_filters(
+    request: HttpRequest,
+    rows: List[Mapping[str, Any]],
+    flagged_key: str,
+) -> tuple[List[Mapping[str, Any]], Dict[str, Any]]:
+    form = FilterForm(request.GET or None)
+    if not form.is_valid() or not rows:
+        return list(rows), {"visible_count": len(rows)}
+
+    filtered = list(rows)
+    if form.cleaned_data.get("flagged_only"):
+        filtered = [r for r in filtered if _coerce_flagged(r.get(flagged_key))]
+
+    customer_id = form.cleaned_data.get("customer_id")
+    if customer_id:
+        filtered = [r for r in filtered if str(r.get("customer_id", "")) == str(customer_id)]
+
+    merchant = form.cleaned_data.get("merchant")
+    if merchant:
+        needle = str(merchant).lower()
+        filtered = [r for r in filtered if needle in str(r.get("merchant", "")).lower()]
+
+    category = form.cleaned_data.get("category")
+    if category:
+        needle = str(category).lower()
+        filtered = [r for r in filtered if needle in str(r.get("category", "")).lower()]
+
+    min_risk = form.cleaned_data.get("min_fraud_risk")
+    if min_risk is not None:
+        filtered = [
+            r
+            for r in filtered
+            if _coerce_float(r.get("fraud_risk")) is not None
+            and _coerce_float(r.get("fraud_risk")) >= float(min_risk)
+        ]
+
+    return filtered, {"visible_count": len(filtered)}
+
+
+def _coerce_flagged(value: Any) -> bool:
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "y", "t"}:
+            return True
+        if lowered in {"0", "false", "no", "n", ""}:
+            return False
+    return bool(value)
+
+
+def _coerce_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "tx_count": int(run_meta.get("tx_count", run_meta.get("n", 0)) or 0),
+        "pct_flagged": float(run_meta.get("pct_flagged", 0.0) or 0.0),
+        "pct_auto_cat": float(run_meta.get("pct_auto_categorised", 0.0) or 0.0),
+    }

@@ -76,6 +76,17 @@ class _EmbeddingsLightGBMCategoriser:
                 batch_size=batch_size,
                 show_progress_bar=False,
             )
+        except TypeError:
+            try:
+                vec = encoder.encode(
+                    list(texts),
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                )
+            except Exception as inner_exc:
+                raise RuntimeError(
+                    f"Embedding model '{self._encoder_name}' failed to encode text: {inner_exc}"
+                ) from inner_exc
         except Exception as exc:
             raise RuntimeError(
                 f"Embedding model '{self._encoder_name}' failed to encode text: {exc}"
@@ -155,7 +166,10 @@ class Scorer:
         if not selected:
             raise KeyError(f"No latest model set for section: {section}")
         entry = self._reg[section][selected]
-        artefact = self._load_artefact(entry["artefact"])
+        if "artefact" in entry:
+            artefact = self._load_artefact(entry["artefact"])
+        else:
+            artefact = self._load(section, selected)
         return entry, artefact
 
     def _get_entry(self, section: str, version: Optional[str] = None) -> dict[str, Any]:
@@ -165,6 +179,12 @@ class Scorer:
         if not selected:
             raise KeyError(f"No latest model set for section: {section}")
         return self._reg[section][selected]
+
+    def _load(self, task: str, version: Optional[str]) -> Any:
+        entry = self._get_entry(task, version)
+        if "artefact" not in entry:
+            raise KeyError(f"Registry entry missing artefact for {task}:{version}")
+        return self._load_artefact(entry["artefact"])
 
     def score(
         self,
