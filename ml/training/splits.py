@@ -32,46 +32,46 @@ class SplitResult:
     meta: Dict[str, Any]
 
 
-# def _safe_stratify_split(
-#     y: np.ndarray,
-#     test_size: float,
-#     seed: int,
-# ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
-#     """
-#     Attempt stratified split, fall back to non stratified when classes are too small.
-#     """
-#     y_series = pd.Series(y)
-#     test_count = max(1, int(round(len(y_series) * test_size)))
-#     class_counts = y_series.value_counts()
-#     can_stratify = (
-#         len(class_counts) <= test_count
-#         and (class_counts.min() if len(class_counts) else 0) >= 2
-#     )
+def _safe_stratify_split(
+    y: np.ndarray,
+    test_size: float,
+    seed: int,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """
+    Attempt stratified split, fall back to non stratified when classes are too small.
+    """
+    y_series = pd.Series(y)
+    test_count = max(1, int(round(len(y_series) * test_size)))
+    class_counts = y_series.value_counts()
+    can_stratify = (
+        len(class_counts) <= test_count
+        and (class_counts.min() if len(class_counts) else 0) >= 2
+    )
 
-#     if can_stratify:
-#         idx_train, idx_test = train_test_split(
-#             np.arange(len(y)),
-#             test_size=test_size,
-#             random_state=seed,
-#             stratify=y,
-#         )
-#         return (
-#             np.asarray(idx_train),
-#             np.asarray(idx_test),
-#             {"split_type": "random_stratified"},
-#         )
+    if can_stratify:
+        idx_train, idx_test = train_test_split(
+            np.arange(len(y)),
+            test_size=test_size,
+            random_state=seed,
+            stratify=y,
+        )
+        return (
+            np.asarray(idx_train),
+            np.asarray(idx_test),
+            {"split_type": "random_stratified"},
+        )
 
-#     idx_train, idx_test = train_test_split(
-#         np.arange(len(y)),
-#         test_size=test_size,
-#         random_state=seed,
-#         stratify=None,
-#     )
-#     return (
-#         np.asarray(idx_train),
-#         np.asarray(idx_test),
-#         {"split_type": "random_no_stratify"},
-#     )
+    idx_train, idx_test = train_test_split(
+        np.arange(len(y)),
+        test_size=test_size,
+        random_state=seed,
+        stratify=None,
+    )
+    return (
+        np.asarray(idx_train),
+        np.asarray(idx_test),
+        {"split_type": "random_no_stratify"},
+    )
 
 
 # def _time_split_indices(
