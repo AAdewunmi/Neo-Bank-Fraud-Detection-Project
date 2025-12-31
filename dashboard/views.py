@@ -53,6 +53,7 @@ def index(request: HttpRequest) -> HttpResponse:
         "threshold": run_meta.get("threshold"),
         "export_available": bool(table_rows),
         "kpi": _build_kpis(run_meta),
+        "insights_generated_at": _load_insights_timestamp(),
         "error": None,
     }
 
@@ -120,6 +121,7 @@ def index(request: HttpRequest) -> HttpResponse:
                     "threshold": scored_run.run_meta.get("threshold"),
                     "export_available": bool(scored_run.rows),
                     "kpi": _build_kpis(scored_run.run_meta),
+                    "insights_generated_at": _load_insights_timestamp(),
                 }
             )
             return render(request, "dashboard/index.html", context)
@@ -194,3 +196,17 @@ def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
         "pct_flagged": float(run_meta.get("pct_flagged", 0.0) or 0.0),
         "pct_auto_cat": float(run_meta.get("pct_auto_categorised", 0.0) or 0.0),
     }
+
+
+def _load_insights_timestamp() -> str | None:
+    for path in (
+        os.path.join("artefacts", "fraud_insights_timestamp.txt"),
+        os.path.join("neobank_site", "static", "artefacts", "fraud_insights_timestamp.txt"),
+    ):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                value = handle.read().strip()
+                return value or None
+        except FileNotFoundError:
+            continue
+    return None

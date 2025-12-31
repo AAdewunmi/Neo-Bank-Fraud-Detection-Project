@@ -65,7 +65,7 @@
           <td>{{ r.category_confidence }}</td>
           <td>{{ r.fraud_risk }}</td>
           <td>
-            {% if r.flagged %}
+            {% if r.flagged or r.fraud_flag %}
               <span class="badge bg-danger">Flagged</span>
             {% else %}
               <span class="badge bg-success">OK</span>

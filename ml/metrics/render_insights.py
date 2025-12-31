@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Optional
+from datetime import datetime, timezone
 import shutil
 
 from ml.metrics.plots import pr_curve_from_metrics, threshold_precision_recall
@@ -62,11 +63,17 @@ def main() -> None:
     pr_curve_from_metrics(metrics_path, str(pr_png))
     threshold_precision_recall(metrics_path, str(thr_png))
 
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    stamp_path = artefacts / "fraud_insights_timestamp.txt"
+    stamp_path.write_text(timestamp, encoding="utf-8")
+
     static_dir = Path("neobank_site") / "static" / "artefacts"
     _copy_to_static(pr_png, static_dir)
     _copy_to_static(thr_png, static_dir)
+    _copy_to_static(stamp_path, static_dir)
 
     print(f"Wrote: {pr_png} and {thr_png}")
+    print(f"Updated timestamp: {stamp_path}")
     print(f"Copied to static: {static_dir}")
 
 
