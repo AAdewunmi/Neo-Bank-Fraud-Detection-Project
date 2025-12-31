@@ -16,6 +16,14 @@ import pandas as pd
 from ml.inference.scorer import Scorer
 
 REQUIRED_COLUMNS: List[str] = ["timestamp", "amount", "customer_id", "merchant", "description"]
+_SCORER: Scorer | None = None
+
+
+def _get_scorer() -> Scorer:
+    global _SCORER
+    if _SCORER is None:
+        _SCORER = Scorer()
+    return _SCORER
 
 
 def read_csv(file_obj) -> pd.DataFrame:
@@ -61,7 +69,7 @@ def score_df(df: pd.DataFrame, threshold: float) -> Tuple[pd.DataFrame, Dict[str
     Returns:
         Tuple of (scored dataframe, diagnostics dict).
     """
-    scorer = Scorer()
+    scorer = _get_scorer()
     scored_df, diags = scorer.score(df, threshold=threshold)
 
     # Normalise baseline diagnostics keys so the view relies on a stable contract.
