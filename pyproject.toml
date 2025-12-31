@@ -6,6 +6,9 @@ addopts = "-q"
 [tool.coverage.run]
 branch = true
 source = ["ml", "dashboard"]
+omit = [
+  "ml/*",
+]
 
 [tool.coverage.report]
 fail_under = 80
