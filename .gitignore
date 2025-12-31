@@ -82,3 +82,4 @@ postgres-data/
 ```
 
 If you want `data/` to never be empty (even if you remove the sample later), add a `data/.gitkeep` file (the ignore rules above already allow it).
+.cache
