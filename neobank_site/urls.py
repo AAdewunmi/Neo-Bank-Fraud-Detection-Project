@@ -12,6 +12,7 @@ urlpatterns = [
     path("", dashboard_views.public_home, name="public_home"),
 
     # Dashboard (main app)
+    path("ops/", dashboard_views.index, name="dashboard"),
     path("ops/", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
 
     # Auth endpoints
