@@ -49,6 +49,7 @@ from sklearn.model_selection import train_test_split
 
 import xgboost as xgb
 
+from ml.fraud_features import FEATURE_ORDER, compute_train_features
 from ml.training.splits import split_train_test
 from ml.training.utils import load_registry, save_registry, schema_hash
 
@@ -289,10 +290,12 @@ def main(args: argparse.Namespace) -> None:
     if len(np.unique(y)) < 2:
         raise ValueError("Need both positive and negative labels to train and evaluate.")
 
-    feature_names = list(args.features) if args.features else [args.amount_col]
-    _require_columns(df, feature_names)
+    base_feature_cols = [args.amount_col, timestamp_col, group_col]
+    _require_columns(df, base_feature_cols)
 
-    X = _resolve_features(df, feature_names)
+    feat = compute_train_features(df.rename(columns={args.amount_col: "amount"}))
+    X = feat.values
+    feature_names = FEATURE_ORDER[:]
 
     if split_mode in {"time", "group"}:
         split = split_train_test(
