@@ -15,6 +15,7 @@ Env knobs:
 
 from __future__ import annotations
 import os
+from pathlib import Path
 from typing import Any, Optional, Protocol, Sequence, Tuple
 
 import numpy as np
@@ -140,7 +141,17 @@ class Scorer:
     def _load_artefact(self, artefact_path: str) -> Any:
         if artefact_path in self._artefact_cache:
             return self._artefact_cache[artefact_path]
-        obj = load(artefact_path)
+        candidate = Path(artefact_path)
+        if not candidate.exists():
+            fallback = Path.cwd() / "artefacts" / candidate.name
+            if fallback.exists():
+                candidate = fallback
+            else:
+                raise FileNotFoundError(
+                    f"Model artefact not found: {artefact_path}. "
+                    "Retrain the model or update the registry."
+                )
+        obj = load(str(candidate))
         self._artefact_cache[artefact_path] = obj
         return obj
 
