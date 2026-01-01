@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from joblib import dump
 from sklearn.ensemble import IsolationForest
@@ -40,6 +41,10 @@ def main(args: argparse.Namespace) -> None:
     )
     model.fit(X)
 
+    raw_scores = np.asarray(model.decision_function(X), dtype=float)
+    min_score = float(np.percentile(raw_scores, 1))
+    max_score = float(np.percentile(raw_scores, 99))
+
     artefacts_dir = Path("artefacts")
     artefacts_dir.mkdir(exist_ok=True)
 
@@ -53,6 +58,12 @@ def main(args: argparse.Namespace) -> None:
         "schema_hash": schema_hash([args.amount_col]),
         "features": [args.amount_col],
         "metrics": {"note": "unsupervised baseline; validate via threshold tests"},
+        "risk_scaler": {
+            "method": "minmax",
+            "direction": "lower_is_riskier",
+            "min": min_score,
+            "max": max_score,
+        },
     }
     registry["fraud"]["latest"] = version
     save_registry(registry, args.registry)

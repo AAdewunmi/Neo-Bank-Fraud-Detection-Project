@@ -404,6 +404,7 @@ def main(args: argparse.Namespace) -> None:
         "features": feature_names,
         "metrics": {"average_precision": ap, "label_source": label_source},
         "type": "supervised_xgb",
+        "risk_mode": "predict_proba",
         "synthetic": bool(synthetic_flag),
         "label_mode": label_meta.get("label_mode"),
         "split_type": split_meta.get("split_type"),

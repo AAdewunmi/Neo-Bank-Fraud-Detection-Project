@@ -239,11 +239,22 @@ class Scorer:
                     .astype(float)
                     .values
                 )
+                raw_scores = None
                 if hasattr(frd_model, "decision_function"):
                     raw_scores = np.asarray(frd_model.decision_function(fraud_X), dtype=float)
-                    fraud_risk = _sigmoid_from_raw_scores(raw_scores)
                 elif hasattr(frd_model, "score_samples"):
                     raw_scores = np.asarray(frd_model.score_samples(fraud_X), dtype=float)
+
+                scaler = frd_entry.get("risk_scaler")
+                if scaler and raw_scores is not None:
+                    min_score = float(scaler.get("min", np.min(raw_scores)))
+                    max_score = float(scaler.get("max", np.max(raw_scores)))
+                    denom = max(max_score - min_score, 1e-9)
+                    if scaler.get("direction") == "lower_is_riskier":
+                        fraud_risk = (max_score - raw_scores) / denom
+                    else:
+                        fraud_risk = (raw_scores - min_score) / denom
+                elif raw_scores is not None:
                     fraud_risk = _sigmoid_from_raw_scores(raw_scores)
                 elif hasattr(frd_model, "predict_proba"):
                     fraud_risk = np.asarray(frd_model.predict_proba(fraud_X)[:, 1], dtype=float)
