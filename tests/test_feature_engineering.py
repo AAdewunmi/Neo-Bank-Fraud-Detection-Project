@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import io
 
-import pandas as pd
 
 from dashboard.services import read_csv
 

@@ -278,7 +278,24 @@
       "synthetic": false,
       "type": "supervised_xgb"
     },
-    "latest": "fraud_xgb_20251231225043"
+    "fraud_xgb_20260101000235": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-110/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260101000235.joblib",
+      "features": [
+        "amount"
+      ],
+      "label_mode": "real",
+      "metrics": {
+        "average_precision": 0.990909090909091,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-110/test_trainer_writes_metrics_an0/reports/fraud_xgb_20260101000235_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-110/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260101000235_model_card.md",
+      "schema_hash": "85f0e896ad6e26b96a6f3ec6bbd642b0b923443537f1db3891e9c68e8be4a8b6",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_20260101000235"
   },
   "fraud_synthetic": {
     "fraud_xgb_synth_20251231172209": {
