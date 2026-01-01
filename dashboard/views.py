@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict, List, Mapping
 
+import pandas as pd
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
@@ -93,6 +94,26 @@ def index(request: HttpRequest) -> HttpResponse:
             max_preview_rows = int(os.environ.get("LEDGERGUARD_DASHBOARD_MAX_ROWS", "500"))
             preview_df = scored_df.head(max_preview_rows)
             rows_truncated = bool(total_tx_count > len(preview_df))
+
+            if rows_truncated:
+                flagged_col = None
+                if flagged_key in scored_df.columns:
+                    flagged_col = flagged_key
+                elif "fraud_flag" in scored_df.columns:
+                    flagged_col = "fraud_flag"
+
+                if flagged_col:
+                    flagged_rows = scored_df[scored_df[flagged_col].astype(bool)]
+                    if not flagged_rows.empty:
+                        remaining_slots = max_preview_rows - len(flagged_rows)
+                        if remaining_slots > 0:
+                            remainder = scored_df[~scored_df[flagged_col].astype(bool)].head(
+                                remaining_slots
+                            )
+                            preview_df = pd.concat([flagged_rows, remainder], ignore_index=True)
+                        else:
+                            preview_df = flagged_rows.head(max_preview_rows)
+                        rows_truncated = bool(total_tx_count > len(preview_df))
 
             scored_run = build_scored_run(
                 preview_df.to_dict(orient="records"),
