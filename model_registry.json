@@ -420,6 +420,7 @@
     },
     "fraud_xgb_synth_20260101142824": {
       "artefact": "artefacts/fraud_xgb_synth_20260101142824.joblib",
+      "feature_state_path": "artefacts/fraud_xgb_synth_20260101142824_customer_state.csv",
       "features": [
         "amount",
         "amount_z",

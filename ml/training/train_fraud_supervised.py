@@ -49,7 +49,7 @@ from sklearn.model_selection import train_test_split
 
 import xgboost as xgb
 
-from ml.fraud_features import FEATURE_ORDER, compute_train_features
+from ml.fraud_features import FEATURE_ORDER, build_customer_state, compute_train_features
 from ml.training.splits import split_train_test
 from ml.training.utils import load_registry, save_registry, schema_hash
 
@@ -293,7 +293,8 @@ def main(args: argparse.Namespace) -> None:
     base_feature_cols = [args.amount_col, timestamp_col, group_col]
     _require_columns(df, base_feature_cols)
 
-    feat = compute_train_features(df.rename(columns={args.amount_col: "amount"}))
+    df_feat = df.rename(columns={args.amount_col: "amount"})
+    feat = compute_train_features(df_feat)
     X = feat.values
     feature_names = FEATURE_ORDER[:]
 
@@ -360,10 +361,14 @@ def main(args: argparse.Namespace) -> None:
     version_prefix = "fraud_xgb_synth" if synthetic_flag else "fraud_xgb"
     version = f"{version_prefix}_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
     model_path = artefacts / f"{version}.joblib"
+    state_path = artefacts / f"{version}_customer_state.csv"
     metrics_path = reports / f"{version}_metrics.json"
     thresholds_path = reports / f"{version}_thresholds.csv"
 
     dump(clf, model_path)
+
+    state_df = build_customer_state(df_feat)
+    state_df.to_csv(state_path, index=False)
 
     thresholds_df = _build_threshold_table(
         y_true=y_te,
@@ -405,6 +410,8 @@ def main(args: argparse.Namespace) -> None:
         "metrics": {"average_precision": ap, "label_source": label_source},
         "type": "supervised_xgb",
         "risk_mode": "predict_proba",
+        "feature_state_path": str(state_path),
+        "feature_state_type": "customer_amount_stats_v1",
         "synthetic": bool(synthetic_flag),
         "label_mode": label_meta.get("label_mode"),
         "split_type": split_meta.get("split_type"),

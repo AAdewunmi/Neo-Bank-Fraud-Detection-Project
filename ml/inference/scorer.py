@@ -134,6 +134,7 @@ class Scorer:
         self._reg = load_registry(registry_path)
         self._registry = self._reg
         self._artefact_cache: dict[str, Any] = {}
+        self._state_cache: dict[str, pd.DataFrame] = {}
 
     def _load_artefact(self, artefact_path: str) -> Any:
         if artefact_path in self._artefact_cache:
@@ -141,6 +142,13 @@ class Scorer:
         obj = load(artefact_path)
         self._artefact_cache[artefact_path] = obj
         return obj
+
+    def _load_state(self, state_path: str) -> pd.DataFrame:
+        if state_path in self._state_cache:
+            return self._state_cache[state_path]
+        state = pd.read_csv(state_path)
+        self._state_cache[state_path] = state
+        return state
 
     def _get_encoder(self, encoder_name: str) -> Any:
         """Cache SentenceTransformer per process, not per scorer instance."""
@@ -227,7 +235,18 @@ class Scorer:
                     }
                     for col in missing_cols:
                         out[col] = fill_defaults[col]
-                feats = compute_infer_features(out[required_cols].copy())
+                state_df = None
+                state_path = frd_entry.get("feature_state_path")
+                if state_path:
+                    try:
+                        state_df = self._load_state(state_path)
+                    except Exception as exc:
+                        print(f"[Scorer] Failed to load fraud state store: {exc}")
+                        state_df = None
+                feats = compute_infer_features(
+                    out[required_cols].copy(),
+                    state=state_df,
+                )
                 proba = frd_model.predict_proba(feats.values)[:, 1]
                 fraud_risk = np.asarray(proba, dtype=float)
             else:
