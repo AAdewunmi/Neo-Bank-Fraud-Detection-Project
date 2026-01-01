@@ -11,6 +11,7 @@ Usage:
     --input data/sample_transactions.csv \
     --target_col category \
     --text_cols merchant description \
+    --synthetic no \
     --registry model_registry.json
 
 Output:
@@ -22,6 +23,7 @@ from __future__ import annotations
 import argparse
 import math
 from pathlib import Path
+from typing import Any, Dict
 
 
 import pandas as pd
@@ -137,6 +139,47 @@ def _choose_test_fraction_for_stratify(
     return n_test / float(n_samples)
 
 
+def _write_model_card(
+    artefacts_dir: Path,
+    version: str,
+    entry: Dict[str, Any],
+    label_meta: Dict[str, Any],
+    split_meta: Dict[str, Any],
+) -> Path:
+    """
+    Write a minimal model card markdown file for audit and portfolio review.
+    """
+    path = artefacts_dir / f"{version}_model_card.md"
+    lines = []
+    lines.append(f"# Categorisation Model Card {version}")
+    lines.append("")
+    lines.append("## Summary")
+    lines.append(f"- Model type: {entry.get('type')}")
+    macro_f1 = entry.get("metrics", {}).get("macro_f1", 0.0)
+    lines.append(f"- Metric: Macro F1 {macro_f1:.4f}")
+    lines.append(f"- Text cols: {', '.join(entry.get('text_cols', []))}")
+    lines.append(f"- Target col: {entry.get('target_col')}")
+    lines.append("")
+    lines.append("## Labels")
+    label_mode = label_meta.get("label_mode", "unknown")
+    lines.append(f"- Label mode: {label_mode}")
+    if bool(entry.get("synthetic", False)):
+        lines.append("- Synthetic labels are used in this run.")
+        lines.append(
+            "- This model is for offline demonstration only and "
+            "must not be used for real categorisation decisions."
+        )
+    lines.append("")
+    lines.append("## Split")
+    lines.append(f"- Test size: {split_meta.get('test_size')}")
+    lines.append(f"- Stratified: {split_meta.get('stratified')}")
+    lines.append(f"- n_samples: {split_meta.get('n_samples')}")
+    lines.append(f"- n_classes: {split_meta.get('n_classes')}")
+    lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
 def main(args: argparse.Namespace) -> None:
     """
     Train, evaluate, persist, and register a categorisation baseline.
@@ -145,6 +188,11 @@ def main(args: argparse.Namespace) -> None:
         args: Parsed CLI arguments.
     """
     df = pd.read_csv(args.input)
+    synthetic_flag = str(getattr(args, "synthetic", "no")).strip().lower() == "yes"
+    label_meta = {
+        "label_mode": "synthetic" if synthetic_flag else "real",
+        "label_col": args.target_col,
+    }
 
     if args.target_col not in df.columns:
         raise ValueError(f"Missing target column: {args.target_col}")
@@ -199,30 +247,47 @@ def main(args: argparse.Namespace) -> None:
     artefacts_dir = Path("artefacts")
     artefacts_dir.mkdir(exist_ok=True)
 
-    version = f"cat_lr_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
+    version_prefix = "cat_lr_synth" if synthetic_flag else "cat_lr"
+    version = f"{version_prefix}_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
     artefact_path = artefacts_dir / f"{version}.joblib"
     dump(pipeline, artefact_path)
 
     registry = load_registry(args.registry)
-    registry["categorisation"][version] = {
+    section = "categorisation_synthetic" if synthetic_flag else "categorisation"
+    registry.setdefault(section, {})
+    entry = {
         "artefact": str(artefact_path),
         "schema_hash": schema_hash(list(args.text_cols) + [args.target_col]),
         "text_cols": list(args.text_cols),
         "target_col": args.target_col,
-        "metrics": {"macro_f1": float(macro_f1)},
+        "metrics": {"macro_f1": float(macro_f1), "label_meta": label_meta},
         "split": {
             "test_size": float(test_size),
             "stratified": bool(can_stratify),
             "n_samples": int(len(y)),
             "n_classes": int(y.nunique()),
         },
+        "type": "tfidf_logreg",
+        "synthetic": bool(synthetic_flag),
+        "synthetic_note": "synthetic_labels" if synthetic_flag else "real_labels",
+        "label_mode": label_meta.get("label_mode"),
     }
-    registry["categorisation"]["latest"] = version
+    model_card_path = _write_model_card(
+        artefacts_dir=artefacts_dir,
+        version=version,
+        entry=entry,
+        label_meta=label_meta,
+        split_meta=entry["split"],
+    )
+    entry["model_card"] = str(model_card_path)
+    registry[section][version] = entry
+    registry[section]["latest"] = version
     save_registry(registry, args.registry)
 
     print(f"Saved artefact: {artefact_path}")
     print(f"Macro F1: {macro_f1:.4f}")
     print(f"Split: test_size={test_size:.4f} stratified={can_stratify}")
+    print(f"Registry section: {section}")
 
 
 if __name__ == "__main__":
@@ -231,6 +296,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_col", required=True)
     parser.add_argument("--text_cols", nargs="+", required=True)
     parser.add_argument("--registry", default="model_registry.json")
+    parser.add_argument("--synthetic", default="no", choices=["yes", "no"])
     parser.add_argument(
         "--test_size",
         type=float,

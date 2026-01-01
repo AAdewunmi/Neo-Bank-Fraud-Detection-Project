@@ -16,6 +16,7 @@ Usage
     --target_col category \
     --text_cols merchant description \
     --encoder_name sentence-transformers/all-MiniLM-L6-v2 \
+    --synthetic no \
     --use_embeddings yes \
     --safe_threads yes \
     --fallback_tfidf yes \
@@ -115,6 +116,53 @@ class TfidfLinearCategoriser:
         return labels, np.ones(len(labels), dtype=float)
 
 
+def _write_model_card(
+    artefacts_dir: Path,
+    version: str,
+    entry: dict[str, object],
+    label_meta: dict[str, object],
+    split_meta: dict[str, object],
+) -> Path:
+    """
+    Write a minimal model card markdown file for audit and portfolio review.
+    """
+    path = artefacts_dir / f"{version}_model_card.md"
+    lines = []
+    lines.append(f"# Categorisation Model Card {version}")
+    lines.append("")
+    lines.append("## Summary")
+    lines.append(f"- Model type: {entry.get('type')}")
+    macro_f1 = entry.get("metrics", {}).get("macro_f1", 0.0)
+    lines.append(f"- Metric: Macro F1 {macro_f1:.4f}")
+    lines.append(f"- Text cols: {', '.join(entry.get('text_cols', []))}")
+    lines.append(f"- Target col: {entry.get('target_col')}")
+    lines.append("")
+    lines.append("## Labels")
+    label_mode = label_meta.get("label_mode", "unknown")
+    lines.append(f"- Label mode: {label_mode}")
+    if bool(entry.get("synthetic", False)):
+        lines.append("- Synthetic labels are used in this run.")
+        lines.append(
+            "- This model is for offline demonstration only and "
+            "must not be used for real categorisation decisions."
+        )
+    lines.append("")
+    lines.append("## Split")
+    lines.append(f"- Split type: {split_meta.get('split_type')}")
+    if split_meta.get("split_type") == "time":
+        lines.append(f"- Timestamp col: {split_meta.get('timestamp_col')}")
+        lines.append(f"- Leakage guard: {split_meta.get('leakage_guard')}")
+        lines.append(f"- Overlap groups removed: {split_meta.get('overlap_groups')}")
+    if split_meta.get("split_type") == "group":
+        lines.append(f"- Group col: {split_meta.get('group_col')}")
+        lines.append(f"- Groups: {split_meta.get('n_groups')}")
+    lines.append(f"- n_train: {split_meta.get('n_train')}")
+    lines.append(f"- n_test: {split_meta.get('n_test')}")
+    lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
 def main(args: argparse.Namespace) -> None:
     """
     Train embeddings plus LightGBM categoriser and persist artefacts plus registry entry.
@@ -125,6 +173,11 @@ def main(args: argparse.Namespace) -> None:
         os.environ.setdefault("MKL_NUM_THREADS", "1")
 
     df = pd.read_csv(args.input).dropna(subset=[args.target_col])
+    synthetic_flag = str(getattr(args, "synthetic", "no")).strip().lower() == "yes"
+    label_meta = {
+        "label_mode": "synthetic" if synthetic_flag else "real",
+        "label_col": args.target_col,
+    }
 
     text_series = df[list(args.text_cols)].astype(str).agg(" ".join, axis=1)
     y = df[args.target_col].astype(str)
@@ -203,7 +256,11 @@ def main(args: argparse.Namespace) -> None:
         )
         model_type = "embeddings_lightgbm"
     else:
-        embeddings_status = "fallback_tfidf" if getattr(args, "use_embeddings", "yes") == "yes" else "disabled"
+        embeddings_status = (
+            "fallback_tfidf"
+            if getattr(args, "use_embeddings", "yes") == "yes"
+            else "disabled"
+        )
         vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
         X_train = vectorizer.fit_transform(X_train_text)
         X_test = vectorizer.transform(X_test_text)
@@ -218,14 +275,22 @@ def main(args: argparse.Namespace) -> None:
     artefacts = Path("artefacts")
     artefacts.mkdir(exist_ok=True)
 
-    version = f"cat_minilm_lgbm_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
+    version_prefix = (
+        "cat_minilm_lgbm"
+        if model_type == "embeddings_lightgbm"
+        else "cat_tfidf_logreg"
+    )
+    if synthetic_flag:
+        version_prefix = f"{version_prefix}_synth"
+    version = f"{version_prefix}_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
     model_path = artefacts / f"{version}.joblib"
 
     dump(predictor, model_path)
 
     reg = load_registry(args.registry)
-    reg.setdefault("categorisation", {})
-    reg["categorisation"][version] = {
+    section = "categorisation_synthetic" if synthetic_flag else "categorisation"
+    reg.setdefault(section, {})
+    entry = {
         "artefact": str(model_path),
         "schema_hash": schema_hash(list(args.text_cols) + [args.target_col]),
         "text_cols": list(args.text_cols),
@@ -233,16 +298,30 @@ def main(args: argparse.Namespace) -> None:
         "metrics": {
             "macro_f1": float(macro_f1),
             "embeddings_status": embeddings_status,
+            "label_meta": label_meta,
             "split_meta": split.meta,
         },
         "type": model_type,
+        "synthetic": bool(synthetic_flag),
+        "synthetic_note": "synthetic_labels" if synthetic_flag else "real_labels",
+        "label_mode": label_meta.get("label_mode"),
     }
-    reg["categorisation"]["latest"] = version
+    model_card_path = _write_model_card(
+        artefacts_dir=artefacts,
+        version=version,
+        entry=entry,
+        label_meta=label_meta,
+        split_meta=split.meta,
+    )
+    entry["model_card"] = str(model_card_path)
+    reg[section][version] = entry
+    reg[section]["latest"] = version
     save_registry(reg, args.registry)
 
     print(f"Saved: {model_path}")
     print(f"Macro F1: {macro_f1:.4f}")
     print(classification_report(y_test, y_pred))
+    print(f"Registry section: {section}")
 
 
 if __name__ == "__main__":
@@ -254,6 +333,7 @@ if __name__ == "__main__":
         "--encoder_name",
         default="sentence-transformers/all-MiniLM-L6-v2",
     )
+    parser.add_argument("--synthetic", default="no", choices=["yes", "no"])
     parser.add_argument("--use_embeddings", default="yes", choices=["yes", "no"])
     parser.add_argument("--safe_threads", default="yes", choices=["yes", "no"])
     parser.add_argument("--fallback_tfidf", default="yes", choices=["yes", "no"])
