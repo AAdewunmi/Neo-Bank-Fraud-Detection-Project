@@ -16,7 +16,9 @@ Usage
     --target_col category \
     --text_cols merchant description \
     --encoder_name sentence-transformers/all-MiniLM-L6-v2 \
+    --use_embeddings yes \
     --safe_threads yes \
+    --fallback_tfidf yes \
     --registry model_registry.json
 """
 
@@ -30,12 +32,13 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from joblib import dump
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score
 from sklearn.model_selection import train_test_split
 
 import lightgbm as lgb
 
-from ml.training.embeddings import MiniLMEncoder
 from ml.training.utils import load_registry, save_registry, schema_hash
 
 
@@ -82,6 +85,25 @@ class EmbeddingsLightGBMCategoriser:
             )
         )
 
+        labels = np.asarray(self.model.predict(X))
+        if hasattr(self.model, "predict_proba"):
+            proba = np.asarray(self.model.predict_proba(X))
+            conf = np.max(proba, axis=1)
+            return labels, conf
+        return labels, np.ones(len(labels), dtype=float)
+
+
+class TfidfLinearCategoriser:
+    """
+    Simple TF-IDF + linear model predictor artefact.
+    """
+
+    def __init__(self, model: object, vectorizer: TfidfVectorizer) -> None:
+        self.model = model
+        self.vectorizer = vectorizer
+
+    def predict_with_confidence(self, texts: list[str]) -> Tuple[np.ndarray, np.ndarray]:
+        X = self.vectorizer.transform(list(texts))
         labels = np.asarray(self.model.predict(X))
         if hasattr(self.model, "predict_proba"):
             proba = np.asarray(self.model.predict_proba(X))
@@ -144,41 +166,69 @@ def main(args: argparse.Namespace) -> None:
         seed=42,
     )
 
-    encoder = MiniLMEncoder(model_name=args.encoder_name, device="cpu")
-    try:
-        X_train = encoder.encode(X_train_text)
-        X_test = encoder.encode(X_test_text)
-    except Exception as exc:
-        raise RuntimeError(
-            "Embedding encoding failed. If this is a native crash, try running with "
-            "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false."
-        ) from exc
+    use_embeddings = str(getattr(args, "use_embeddings", "yes")).strip().lower() == "yes"
+    if use_embeddings:
+        from ml.training.embeddings import MiniLMEncoder
 
-    lgbm_params = {
-        "n_estimators": 400,
-        "learning_rate": 0.05,
-        "num_leaves": 31,
-        "subsample": 0.9,
-        "colsample_bytree": 0.9,
-        "random_state": 42,
-    }
+        encoder = MiniLMEncoder(model_name=args.encoder_name, device="cpu")
+        try:
+            X_train = encoder.encode(X_train_text)
+            X_test = encoder.encode(X_test_text)
+        except Exception as exc:
+            if str(getattr(args, "fallback_tfidf", "yes")).strip().lower() == "yes":
+                print(
+                    "[train_categorisation_embeddings] Encoder failed; "
+                    "falling back to TF-IDF + logistic regression."
+                )
+                use_embeddings = False
+            else:
+                raise RuntimeError(
+                    "Embedding encoding failed. If this is a native crash, try running with "
+                    "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false."
+                ) from exc
 
-    if len(X_train) < 50:
-        lgbm_params.update(
-            {
-                "min_data_in_leaf": 1,
-                "min_data_in_bin": 1,
-            }
+    embeddings_status = "enabled"
+    if use_embeddings:
+        lgbm_params = {
+            "n_estimators": 400,
+            "learning_rate": 0.05,
+            "num_leaves": 31,
+            "subsample": 0.9,
+            "colsample_bytree": 0.9,
+            "random_state": 42,
+        }
+
+        if len(X_train) < 50:
+            lgbm_params.update(
+                {
+                    "min_data_in_leaf": 1,
+                    "min_data_in_bin": 1,
+                }
+            )
+            print(
+                "[train_categorisation_embeddings] Small dataset detected; "
+                "relaxing LightGBM min_data_in_leaf/min_data_in_bin."
+            )
+
+        clf = lgb.LGBMClassifier(**lgbm_params)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        predictor: object = EmbeddingsLightGBMCategoriser(
+            model=clf,
+            encoder_name=args.encoder_name,
         )
-        print(
-            "[train_categorisation_embeddings] Small dataset detected; "
-            "relaxing LightGBM min_data_in_leaf/min_data_in_bin."
-        )
+        model_type = "embeddings_lightgbm"
+    else:
+        embeddings_status = "fallback_tfidf" if getattr(args, "use_embeddings", "yes") == "yes" else "disabled"
+        vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+        X_train = vectorizer.fit_transform(X_train_text)
+        X_test = vectorizer.transform(X_test_text)
+        clf = LogisticRegression(max_iter=1000)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        predictor = TfidfLinearCategoriser(model=clf, vectorizer=vectorizer)
+        model_type = "tfidf_logreg"
 
-    clf = lgb.LGBMClassifier(**lgbm_params)
-    clf.fit(X_train, y_train)
-
-    y_pred = clf.predict(X_test)
     macro_f1 = f1_score(y_test, y_pred, average="macro")
 
     artefacts = Path("artefacts")
@@ -187,10 +237,6 @@ def main(args: argparse.Namespace) -> None:
     version = f"cat_minilm_lgbm_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
     model_path = artefacts / f"{version}.joblib"
 
-    predictor = EmbeddingsLightGBMCategoriser(
-        model=clf,
-        encoder_name=args.encoder_name,
-    )
     dump(predictor, model_path)
 
     reg = load_registry(args.registry)
@@ -200,8 +246,8 @@ def main(args: argparse.Namespace) -> None:
         "schema_hash": schema_hash(list(args.text_cols) + [args.target_col]),
         "text_cols": list(args.text_cols),
         "target_col": args.target_col,
-        "metrics": {"macro_f1": float(macro_f1)},
-        "type": "embeddings_lightgbm",
+        "metrics": {"macro_f1": float(macro_f1), "embeddings_status": embeddings_status},
+        "type": model_type,
     }
     reg["categorisation"]["latest"] = version
     save_registry(reg, args.registry)
@@ -220,6 +266,8 @@ if __name__ == "__main__":
         "--encoder_name",
         default="sentence-transformers/all-MiniLM-L6-v2",
     )
+    parser.add_argument("--use_embeddings", default="yes", choices=["yes", "no"])
     parser.add_argument("--safe_threads", default="yes", choices=["yes", "no"])
+    parser.add_argument("--fallback_tfidf", default="yes", choices=["yes", "no"])
     parser.add_argument("--registry", default="model_registry.json")
     main(parser.parse_args())
