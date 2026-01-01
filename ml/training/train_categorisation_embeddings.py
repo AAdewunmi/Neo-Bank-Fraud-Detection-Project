@@ -45,6 +45,13 @@ import lightgbm as lgb
 from ml.training.utils import load_registry, save_registry, schema_hash
 from ml.training.splits import split_train_test
 
+try:
+    from ml.training.embeddings import MiniLMEncoder as _MiniLMEncoder
+except Exception:
+    _MiniLMEncoder = None
+
+MiniLMEncoder = _MiniLMEncoder
+
 
 class EmbeddingsLightGBMCategoriser:
     """
@@ -205,8 +212,11 @@ def main(args: argparse.Namespace) -> None:
 
     use_embeddings = str(getattr(args, "use_embeddings", "yes")).strip().lower() == "yes"
     if use_embeddings:
-        from ml.training.embeddings import MiniLMEncoder
-
+        if MiniLMEncoder is None:
+            raise RuntimeError(
+                "MiniLMEncoder is unavailable. Install embeddings dependencies or "
+                "run with --use_embeddings no."
+            )
         encoder = MiniLMEncoder(model_name=args.encoder_name, device="cpu")
         try:
             X_train = encoder.encode(X_train_text)

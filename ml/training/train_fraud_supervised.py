@@ -290,13 +290,21 @@ def main(args: argparse.Namespace) -> None:
     if len(np.unique(y)) < 2:
         raise ValueError("Need both positive and negative labels to train and evaluate.")
 
-    base_feature_cols = [args.amount_col, timestamp_col, group_col]
-    _require_columns(df, base_feature_cols)
+    _require_columns(df, [args.amount_col])
+    if timestamp_col not in df.columns:
+        df[timestamp_col] = pd.NaT
+    if group_col not in df.columns:
+        df[group_col] = "unknown"
 
     df_feat = df.rename(columns={args.amount_col: "amount"})
     feat = compute_train_features(df_feat)
     X = feat.values
     feature_names = FEATURE_ORDER[:]
+
+    if split_mode == "time":
+        ts_valid = pd.to_datetime(df[timestamp_col], errors="coerce").notna().any()
+        if not ts_valid:
+            split_mode = "random"
 
     if split_mode in {"time", "group"}:
         split = split_train_test(

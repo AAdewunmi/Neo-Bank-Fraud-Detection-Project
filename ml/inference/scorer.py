@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 from joblib import load
 from ml.training.utils import load_registry
+from ml.fraud_features import FEATURE_ORDER
 
 
 _ENCODER_CACHE: dict[str, Any] = {}
@@ -222,7 +223,7 @@ class Scorer:
             frd_entry = self._reg["fraud"][frd_meta_key]
             frd_model = self._load("fraud", fraud_version)
 
-            if frd_entry.get("type") == "supervised_xgb":
+            if frd_entry.get("type") == "supervised_xgb" or frd_entry.get("features") == FEATURE_ORDER:
                 from ml.fraud_features import compute_infer_features
 
                 required_cols = ["timestamp", "amount", "customer_id"]

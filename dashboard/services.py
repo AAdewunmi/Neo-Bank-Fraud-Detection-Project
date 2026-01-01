@@ -58,7 +58,7 @@ def _engineer_fraud_features(df: pd.DataFrame) -> pd.DataFrame:
                 return pd.Series(counts.values, index=group.index)
 
             df["velocity_24h"] = (
-                df.groupby("customer_id", sort=False, group_keys=False)
+                df.groupby("customer_id", sort=False, group_keys=False)[["_ts"]]
                 .apply(_rolling_count)
                 .astype(int)
             )
