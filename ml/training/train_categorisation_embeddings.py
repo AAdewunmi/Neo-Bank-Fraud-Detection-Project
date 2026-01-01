@@ -17,7 +17,7 @@ Usage
     --text_cols merchant description \
     --encoder_name sentence-transformers/all-MiniLM-L6-v2 \
     --synthetic no \
-    --use_embeddings yes \
+    --use_embeddings no \
     --safe_threads yes \
     --fallback_tfidf yes \
     --split_mode time \
@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -44,6 +45,8 @@ import lightgbm as lgb
 
 from ml.training.utils import load_registry, save_registry, schema_hash
 from ml.training.splits import split_train_test
+
+sys.modules.setdefault("ml.training.train_categorisation_embeddings", sys.modules[__name__])
 
 try:
     from ml.training.embeddings import MiniLMEncoder as _MiniLMEncoder
@@ -121,6 +124,10 @@ class TfidfLinearCategoriser:
             conf = np.max(proba, axis=1)
             return labels, conf
         return labels, np.ones(len(labels), dtype=float)
+
+
+EmbeddingsLightGBMCategoriser.__module__ = "ml.training.train_categorisation_embeddings"
+TfidfLinearCategoriser.__module__ = "ml.training.train_categorisation_embeddings"
 
 
 def _write_model_card(

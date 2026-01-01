@@ -128,6 +128,7 @@ def build_scored_run(
     total_tx_count: Optional[int] = None,
     flagged_count_total: Optional[int] = None,
     rows_truncated: bool = False,
+    scored_at: Optional[str] = None,
 ) -> ScoredRun:
     normalised_rows: List[Dict[str, Any]] = []
     flagged_count_preview = 0
@@ -163,6 +164,8 @@ def build_scored_run(
         "rows_truncated": bool(rows_truncated),
         "flagged_key": str(flagged_key),
     }
+    if scored_at:
+        run_meta["scored_at"] = str(scored_at)
 
     return ScoredRun(rows=normalised_rows, run_meta=_coerce_jsonable(run_meta))
 

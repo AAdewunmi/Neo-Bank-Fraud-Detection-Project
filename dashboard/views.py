@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Mapping
 
 import pandas as pd
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from dashboard.decorators import ops_access_required
 from dashboard.forms import FilterForm, UploadForm
@@ -54,7 +57,9 @@ def index(request: HttpRequest) -> HttpResponse:
         "threshold": run_meta.get("threshold"),
         "export_available": bool(table_rows),
         "kpi": _build_kpis(run_meta),
-        "insights_generated_at": _load_insights_timestamp(),
+        "insights_generated_at": _format_insights_timestamp(
+            _resolve_insights_timestamp(run_meta)
+        ),
         "error": None,
     }
 
@@ -124,6 +129,7 @@ def index(request: HttpRequest) -> HttpResponse:
                 total_tx_count=total_tx_count,
                 flagged_count_total=flagged_count_total,
                 rows_truncated=rows_truncated,
+                scored_at=timezone.now().isoformat(),
             )
 
             save_scored_run(request.session, scored_run)
@@ -142,7 +148,9 @@ def index(request: HttpRequest) -> HttpResponse:
                     "threshold": scored_run.run_meta.get("threshold"),
                     "export_available": bool(scored_run.rows),
                     "kpi": _build_kpis(scored_run.run_meta),
-                    "insights_generated_at": _load_insights_timestamp(),
+                    "insights_generated_at": _format_insights_timestamp(
+                        _resolve_insights_timestamp(scored_run.run_meta)
+                    ),
                 }
             )
             return render(request, "dashboard/index.html", context)
@@ -220,14 +228,38 @@ def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def _load_insights_timestamp() -> str | None:
+    base_dir = Path(getattr(settings, "BASE_DIR", "."))
     for path in (
-        os.path.join("artefacts", "fraud_insights_timestamp.txt"),
-        os.path.join("neobank_site", "static", "artefacts", "fraud_insights_timestamp.txt"),
+        base_dir / "artefacts" / "fraud_insights_timestamp.txt",
+        base_dir / "neobank_site" / "static" / "artefacts" / "fraud_insights_timestamp.txt",
     ):
         try:
-            with open(path, "r", encoding="utf-8") as handle:
+            with path.open("r", encoding="utf-8") as handle:
                 value = handle.read().strip()
                 return value or None
         except FileNotFoundError:
             continue
     return None
+
+
+def _resolve_insights_timestamp(run_meta: Mapping[str, Any]) -> str | None:
+    file_ts = _load_insights_timestamp()
+    run_ts = run_meta.get("scored_at") if isinstance(run_meta, Mapping) else None
+    if not file_ts:
+        return run_ts
+    if not run_ts:
+        return file_ts
+    file_dt = pd.to_datetime(file_ts, errors="coerce")
+    run_dt = pd.to_datetime(run_ts, errors="coerce")
+    if pd.isna(file_dt) or pd.isna(run_dt):
+        return run_ts or file_ts
+    return run_ts if run_dt >= file_dt else file_ts
+
+
+def _format_insights_timestamp(value: str | None) -> str | None:
+    if not value:
+        return None
+    dt = pd.to_datetime(value, errors="coerce")
+    if pd.isna(dt):
+        return value
+    return dt.strftime("%b %-d, %Y %H:%M")
