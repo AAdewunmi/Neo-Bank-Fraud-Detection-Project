@@ -19,6 +19,9 @@ Usage
     --use_embeddings yes \
     --safe_threads yes \
     --fallback_tfidf yes \
+    --split_mode time \
+    --timestamp_col timestamp \
+    --group_col customer_id \
     --registry model_registry.json
 """
 
@@ -35,11 +38,11 @@ from joblib import dump
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score
-from sklearn.model_selection import train_test_split
 
 import lightgbm as lgb
 
 from ml.training.utils import load_registry, save_registry, schema_hash
+from ml.training.splits import split_train_test
 
 
 class EmbeddingsLightGBMCategoriser:
@@ -112,39 +115,6 @@ class TfidfLinearCategoriser:
         return labels, np.ones(len(labels), dtype=float)
 
 
-def _safe_train_test_split(
-    text: pd.Series,
-    y: pd.Series,
-    test_size: float,
-    seed: int,
-) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
-    """
-    Attempt stratified split, fall back to non-stratified when classes are too small.
-
-    This keeps the trainer runnable on tiny demo datasets without crashing.
-    """
-    test_count = max(1, int(round(len(y) * test_size)))
-    class_counts = y.value_counts()
-    can_stratify = (
-        len(class_counts) <= test_count
-        and (class_counts.min() if len(class_counts) else 0) >= 2
-    )
-
-    if not can_stratify:
-        print(
-            "[train_categorisation_embeddings] Disabling stratify: "
-            "not enough samples per class for the chosen test_size."
-        )
-
-    return train_test_split(
-        text,
-        y,
-        test_size=test_size,
-        random_state=seed,
-        stratify=y if can_stratify else None,
-    )
-
-
 def main(args: argparse.Namespace) -> None:
     """
     Train embeddings plus LightGBM categoriser and persist artefacts plus registry entry.
@@ -159,12 +129,26 @@ def main(args: argparse.Namespace) -> None:
     text_series = df[list(args.text_cols)].astype(str).agg(" ".join, axis=1)
     y = df[args.target_col].astype(str)
 
-    X_train_text, X_test_text, y_train, y_test = _safe_train_test_split(
-        text=text_series,
-        y=y,
-        test_size=0.2,
-        seed=42,
+    split = split_train_test(
+        df=df,
+        y=y.values,
+        test_size=float(getattr(args, "test_size", 0.2)),
+        seed=int(getattr(args, "seed", 42)),
+        split_mode=str(getattr(args, "split_mode", "random")),
+        timestamp_col=str(getattr(args, "timestamp_col", "timestamp")),
+        group_col=str(getattr(args, "group_col", "customer_id")),
+        leakage_guard=str(getattr(args, "leakage_guard", "yes")).strip().lower() == "yes",
     )
+    if split.meta.get("split_type") == "random_no_stratify":
+        print(
+            "[train_categorisation_embeddings] Disabling stratify: "
+            "not enough samples per class for the chosen test_size."
+        )
+
+    X_train_text = text_series.iloc[split.train_idx]
+    X_test_text = text_series.iloc[split.test_idx]
+    y_train = y.iloc[split.train_idx]
+    y_test = y.iloc[split.test_idx]
 
     use_embeddings = str(getattr(args, "use_embeddings", "yes")).strip().lower() == "yes"
     if use_embeddings:
@@ -246,7 +230,11 @@ def main(args: argparse.Namespace) -> None:
         "schema_hash": schema_hash(list(args.text_cols) + [args.target_col]),
         "text_cols": list(args.text_cols),
         "target_col": args.target_col,
-        "metrics": {"macro_f1": float(macro_f1), "embeddings_status": embeddings_status},
+        "metrics": {
+            "macro_f1": float(macro_f1),
+            "embeddings_status": embeddings_status,
+            "split_meta": split.meta,
+        },
         "type": model_type,
     }
     reg["categorisation"]["latest"] = version
@@ -269,5 +257,11 @@ if __name__ == "__main__":
     parser.add_argument("--use_embeddings", default="yes", choices=["yes", "no"])
     parser.add_argument("--safe_threads", default="yes", choices=["yes", "no"])
     parser.add_argument("--fallback_tfidf", default="yes", choices=["yes", "no"])
+    parser.add_argument("--split_mode", default="random", choices=["time", "group", "random"])
+    parser.add_argument("--timestamp_col", default="timestamp")
+    parser.add_argument("--group_col", default="customer_id")
+    parser.add_argument("--leakage_guard", default="yes", choices=["yes", "no"])
+    parser.add_argument("--test_size", type=float, default=0.2)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--registry", default="model_registry.json")
     main(parser.parse_args())

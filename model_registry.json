@@ -76,7 +76,31 @@
       ],
       "type": "embeddings_lightgbm"
     },
-    "latest": "cat_minilm_lgbm_20260101143202"
+    "cat_minilm_lgbm_20260101143803": {
+      "artefact": "artefacts/cat_minilm_lgbm_20260101143803.joblib",
+      "metrics": {
+        "embeddings_status": "disabled",
+        "macro_f1": 0.0,
+        "split_meta": {
+          "leakage_guard": "removed_overlap_groups",
+          "n_test": 2,
+          "n_total": 12,
+          "n_train": 8,
+          "overlap_groups": 1,
+          "split_type": "time",
+          "timestamp_col": "timestamp",
+          "train_removed_rows": 2
+        }
+      },
+      "schema_hash": "e06d3a602c00707bd067b45e6a05b1153efec9e6b0278bf718485f8805030acd",
+      "target_col": "category",
+      "text_cols": [
+        "merchant",
+        "description"
+      ],
+      "type": "tfidf_logreg"
+    },
+    "latest": "cat_minilm_lgbm_20260101143803"
   },
   "fraud": {
     "fraud_if_20251217150855": {
