@@ -2,8 +2,7 @@
 Train an unsupervised fraud baseline (Isolation Forest) on numeric features.
 
 Usage:
-  source .venv/bin/activate
-  python ml/training/train_fraud_baseline.py \
+ PYTHONPATH=. python ml/training/train_fraud_baseline.py \
     --input data/sample_transactions.csv \
     --amount_col amount \
     --registry model_registry.json

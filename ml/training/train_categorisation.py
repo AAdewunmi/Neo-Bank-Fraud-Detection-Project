@@ -7,7 +7,7 @@ This trainer is designed to be boringly reliable in Week 1:
 - robust split logic for tiny datasets (avoids common stratify failures)
 
 Usage:
-  python -m ml.training.train_categorisation \
+ PYTHONPATH=. python -m ml.training.train_categorisation \
     --input data/sample_transactions.csv \
     --target_col category \
     --text_cols merchant description \

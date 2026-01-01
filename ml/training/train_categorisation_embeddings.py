@@ -22,6 +22,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from typing import Tuple
 
@@ -125,6 +126,10 @@ def main(args: argparse.Namespace) -> None:
     """
     Train embeddings plus LightGBM categoriser and persist artefacts plus registry entry.
     """
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("MKL_NUM_THREADS", "1")
+
     df = pd.read_csv(args.input).dropna(subset=[args.target_col])
 
     text_series = df[list(args.text_cols)].astype(str).agg(" ".join, axis=1)
@@ -138,8 +143,14 @@ def main(args: argparse.Namespace) -> None:
     )
 
     encoder = MiniLMEncoder(model_name=args.encoder_name, device="cpu")
-    X_train = encoder.encode(X_train_text)
-    X_test = encoder.encode(X_test_text)
+    try:
+        X_train = encoder.encode(X_train_text)
+        X_test = encoder.encode(X_test_text)
+    except Exception as exc:
+        raise RuntimeError(
+            "Embedding encoding failed. If this is a native crash, try running with "
+            "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false."
+        ) from exc
 
     lgbm_params = {
         "n_estimators": 400,
