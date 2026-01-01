@@ -16,6 +16,7 @@ Usage
     --target_col category \
     --text_cols merchant description \
     --encoder_name sentence-transformers/all-MiniLM-L6-v2 \
+    --safe_threads yes \
     --registry model_registry.json
 """
 
@@ -126,9 +127,10 @@ def main(args: argparse.Namespace) -> None:
     """
     Train embeddings plus LightGBM categoriser and persist artefacts plus registry entry.
     """
-    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    os.environ.setdefault("MKL_NUM_THREADS", "1")
+    if str(getattr(args, "safe_threads", "yes")).strip().lower() == "yes":
+        os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
 
     df = pd.read_csv(args.input).dropna(subset=[args.target_col])
 
@@ -218,5 +220,6 @@ if __name__ == "__main__":
         "--encoder_name",
         default="sentence-transformers/all-MiniLM-L6-v2",
     )
+    parser.add_argument("--safe_threads", default="yes", choices=["yes", "no"])
     parser.add_argument("--registry", default="model_registry.json")
     main(parser.parse_args())
