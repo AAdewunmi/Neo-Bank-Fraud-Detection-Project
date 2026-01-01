@@ -210,30 +210,37 @@ class Scorer:
         fraud_risk = np.zeros(len(out), dtype=float)
 
         if "fraud" in self._reg and self._reg["fraud"].get("latest"):
-            fraud_entry = self._get_entry("fraud", fraud_version)
-            _, fraud_model = self._load_model("fraud", fraud_version)
-            fraud_features = fraud_entry.get("features", ["amount"])
+            frd_meta_key = fraud_version or self._reg["fraud"]["latest"]
+            frd_entry = self._reg["fraud"][frd_meta_key]
+            frd_model = self._load("fraud", fraud_version)
 
-            fraud_X = (
-                out[list(fraud_features)]
-                .apply(pd.to_numeric, errors="coerce")
-                .fillna(0.0)
-                .astype(float)
-                .values
-            )
+            if frd_entry.get("type") == "supervised_xgb":
+                from ml.fraud_features import compute_infer_features
 
-            if hasattr(fraud_model, "predict_proba"):
-                fraud_risk = np.asarray(fraud_model.predict_proba(fraud_X)[:, 1], dtype=float)
-            elif hasattr(fraud_model, "decision_function"):
-                raw_scores = np.asarray(fraud_model.decision_function(fraud_X), dtype=float)
-                fraud_risk = _sigmoid_from_raw_scores(raw_scores)
-            elif hasattr(fraud_model, "score_samples"):
-                raw_scores = np.asarray(fraud_model.score_samples(fraud_X), dtype=float)
-                fraud_risk = _sigmoid_from_raw_scores(raw_scores)
+                feats = compute_infer_features(out[["timestamp", "amount", "customer_id"]].copy())
+                proba = frd_model.predict_proba(feats.values)[:, 1]
+                fraud_risk = np.asarray(proba, dtype=float)
             else:
-                raise AttributeError(
-                    "Fraud model missing predict_proba/decision_function/score_samples"
+                fraud_features = frd_entry.get("features", ["amount"])
+                fraud_X = (
+                    out[list(fraud_features)]
+                    .apply(pd.to_numeric, errors="coerce")
+                    .fillna(0.0)
+                    .astype(float)
+                    .values
                 )
+                if hasattr(frd_model, "decision_function"):
+                    raw_scores = np.asarray(frd_model.decision_function(fraud_X), dtype=float)
+                    fraud_risk = _sigmoid_from_raw_scores(raw_scores)
+                elif hasattr(frd_model, "score_samples"):
+                    raw_scores = np.asarray(frd_model.score_samples(fraud_X), dtype=float)
+                    fraud_risk = _sigmoid_from_raw_scores(raw_scores)
+                elif hasattr(frd_model, "predict_proba"):
+                    fraud_risk = np.asarray(frd_model.predict_proba(fraud_X)[:, 1], dtype=float)
+                else:
+                    raise AttributeError(
+                        "Fraud model missing predict_proba/decision_function/score_samples"
+                    )
 
             fraud_risk = np.clip(fraud_risk, 0.0, 1.0)
             flagged = fraud_risk >= float(threshold)
