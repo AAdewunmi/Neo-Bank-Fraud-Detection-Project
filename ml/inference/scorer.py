@@ -223,7 +223,9 @@ class Scorer:
             frd_entry = self._reg["fraud"][frd_meta_key]
             frd_model = self._load("fraud", fraud_version)
 
-            if frd_entry.get("type") == "supervised_xgb" or frd_entry.get("features") == FEATURE_ORDER:
+            is_engineered = frd_entry.get("type") == "supervised_xgb"
+            is_engineered = is_engineered or frd_entry.get("features") == FEATURE_ORDER
+            if is_engineered:
                 from ml.fraud_features import compute_infer_features
 
                 required_cols = ["timestamp", "amount", "customer_id"]
