@@ -220,10 +220,13 @@ class Scorer:
                 required_cols = ["timestamp", "amount", "customer_id"]
                 missing_cols = [name for name in required_cols if name not in out.columns]
                 if missing_cols:
-                    raise ValueError(
-                        "Missing column(s) for fraud inference: "
-                        f"{', '.join(missing_cols)}"
-                    )
+                    fill_defaults = {
+                        "timestamp": pd.NaT,
+                        "amount": 0.0,
+                        "customer_id": "unknown",
+                    }
+                    for col in missing_cols:
+                        out[col] = fill_defaults[col]
                 feats = compute_infer_features(out[required_cols].copy())
                 proba = frd_model.predict_proba(feats.values)[:, 1]
                 fraud_risk = np.asarray(proba, dtype=float)
