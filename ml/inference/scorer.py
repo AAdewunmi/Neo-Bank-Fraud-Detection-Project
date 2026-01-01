@@ -217,7 +217,14 @@ class Scorer:
             if frd_entry.get("type") == "supervised_xgb":
                 from ml.fraud_features import compute_infer_features
 
-                feats = compute_infer_features(out[["timestamp", "amount", "customer_id"]].copy())
+                required_cols = ["timestamp", "amount", "customer_id"]
+                missing_cols = [name for name in required_cols if name not in out.columns]
+                if missing_cols:
+                    raise ValueError(
+                        "Missing column(s) for fraud inference: "
+                        f"{', '.join(missing_cols)}"
+                    )
+                feats = compute_infer_features(out[required_cols].copy())
                 proba = frd_model.predict_proba(feats.values)[:, 1]
                 fraud_risk = np.asarray(proba, dtype=float)
             else:
