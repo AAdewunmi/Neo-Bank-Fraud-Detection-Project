@@ -27,6 +27,38 @@ def _get_scorer() -> Scorer:
     return _SCORER
 
 
+def _is_paysim_schema(columns: List[str]) -> bool:
+    required = {"amount", "nameOrig", "step"}
+    return required.issubset(set(columns))
+
+
+def _adapt_paysim(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+
+    if "timestamp" not in out.columns and "step" in out.columns:
+        out["timestamp"] = pd.to_datetime(
+            pd.to_numeric(out["step"], errors="coerce"),
+            unit="h",
+            origin="unix",
+            errors="coerce",
+        )
+    if "customer_id" not in out.columns and "nameOrig" in out.columns:
+        out["customer_id"] = out["nameOrig"]
+    if "merchant" not in out.columns:
+        if "nameDest" in out.columns:
+            out["merchant"] = out["nameDest"]
+        elif "type" in out.columns:
+            out["merchant"] = out["type"]
+        else:
+            out["merchant"] = ""
+    if "description" not in out.columns:
+        if "type" in out.columns:
+            out["description"] = out["type"]
+        else:
+            out["description"] = ""
+    return out
+
+
 def _engineer_fraud_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
@@ -102,7 +134,11 @@ def read_csv(file_obj) -> pd.DataFrame:
 
     missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing:
-        raise ValueError(f"Missing required columns: {missing}")
+        if _is_paysim_schema(list(df.columns)):
+            df = _adapt_paysim(df)
+            missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+        if missing:
+            raise ValueError(f"Missing required columns: {missing}")
 
     df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
 
