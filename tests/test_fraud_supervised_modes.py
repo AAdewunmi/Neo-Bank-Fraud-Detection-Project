@@ -56,34 +56,34 @@ def test_synthetic_label_generation_is_deterministic() -> None:
     assert meta["positive_rate"] > 0.0
 
 
-# @pytest.mark.paysim
-# def test_paysim_loader_maps_columns_correctly() -> None:
-#     """
-#     PaySim loader must map dataset-specific columns into the internal schema.
+@pytest.mark.paysim
+def test_paysim_loader_maps_columns_correctly() -> None:
+    """
+    PaySim loader must map dataset-specific columns into the internal schema.
 
-#     This test is marked paysim because:
-#     - It relies on PaySim column conventions.
-#     - It validates dataset-specific semantics.
-#     """
-#     df = pd.DataFrame(
-#         {
-#             "amount": [100.0, 200.0],
-#             "isFraud": [0, 1],
-#             "nameOrig": ["c1", "c2"],
-#             "step": [1, 2],
-#         }
-#     )
+    This test is marked paysim because:
+    - It relies on PaySim column conventions.
+    - It validates dataset-specific semantics.
+    """
+    df = pd.DataFrame(
+        {
+            "amount": [100.0, 200.0],
+            "isFraud": [0, 1],
+            "nameOrig": ["c1", "c2"],
+            "step": [1, 2],
+        }
+    )
 
-#     out, y = load_paysim(df)
+    out, y = load_paysim(df)
 
-#     # PaySim nameOrig must map to customer_id
-#     assert "customer_id" in out.columns
+    # PaySim nameOrig must map to customer_id
+    assert "customer_id" in out.columns
 
-#     # PaySim step must be mapped into a timestamp surrogate
-#     assert "timestamp" in out.columns
+    # PaySim step must be mapped into a timestamp surrogate
+    assert "timestamp" in out.columns
 
-#     # Labels must be preserved exactly
-#     assert y.tolist() == [0, 1]
+    # Labels must be preserved exactly
+    assert y.tolist() == [0, 1]
 
 
 # def test_training_writes_model_and_metrics(tmp_path: Path, monkeypatch) -> None:
