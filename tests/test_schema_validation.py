@@ -43,3 +43,16 @@ def test_read_csv_empty_customer_id_rejected() -> None:
     with pytest.raises(ValueError) as exc:
         read_csv(io.BytesIO(csv.encode("utf-8")))
     assert "customer_id must be non-empty" in str(exc.value)
+
+
+def test_read_csv_rejects_large_files(monkeypatch) -> None:
+    monkeypatch.setenv("LEDGERGUARD_DASHBOARD_MAX_SCORE_ROWS", "2")
+    csv = (
+        "timestamp,amount,customer_id,merchant,description\n"
+        "2024-01-01T00:00:00Z,1.0,c1,m1,d1\n"
+        "2024-01-01T00:01:00Z,2.0,c2,m2,d2\n"
+        "2024-01-01T00:02:00Z,3.0,c3,m3,d3\n"
+    )
+    with pytest.raises(ValueError) as exc:
+        read_csv(io.BytesIO(csv.encode("utf-8")))
+    assert "Dashboard scoring supports up to" in str(exc.value)

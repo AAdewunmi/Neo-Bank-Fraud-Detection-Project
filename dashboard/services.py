@@ -17,7 +17,6 @@ import pandas as pd
 from ml.inference.scorer import Scorer
 
 REQUIRED_COLUMNS: List[str] = ["timestamp", "amount", "customer_id", "merchant", "description"]
-MAX_SCORE_ROWS = int(os.environ.get("LEDGERGUARD_DASHBOARD_MAX_SCORE_ROWS", "30000"))
 _SCORER: Scorer | None = None
 
 
@@ -141,10 +140,11 @@ def read_csv(file_obj) -> pd.DataFrame:
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
 
-    if len(df) > MAX_SCORE_ROWS:
+    max_rows = int(os.environ.get("LEDGERGUARD_DASHBOARD_MAX_SCORE_ROWS", "30000"))
+    if len(df) > max_rows:
         raise ValueError(
             f"CSV has {len(df)} rows. Dashboard scoring supports up to "
-            f"{MAX_SCORE_ROWS} rows for interactive runs. Sample the data or "
+            f"{max_rows} rows for interactive runs. Sample the data or "
             "score offline."
         )
 
