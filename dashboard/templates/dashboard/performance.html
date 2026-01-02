@@ -33,6 +33,10 @@
           {% endif %}
         </div>
         <div class="card-body">
+          <p class="text-muted small mb-3">
+            Snapshot of the latest supervised fraud model from the registry, including key metrics,
+            dataset provenance, and split strategy.
+          </p>
           {% if fraud.latest %}
             <div class="text-muted small mb-2">Latest: {{ fraud.latest }}</div>
             <ul class="list-unstyled mb-0">
@@ -56,6 +60,10 @@
           {% endif %}
         </div>
         <div class="card-body">
+          <p class="text-muted small mb-3">
+            Summary of the latest categorisation model, showing macro F1 performance and
+            whether embeddings or TF-IDF were used.
+          </p>
           {% if categorisation.latest %}
             <div class="text-muted small mb-2">Latest: {{ categorisation.latest }}</div>
             <ul class="list-unstyled mb-0">
@@ -79,6 +87,10 @@
           {% endif %}
         </div>
         <div class="card-body">
+          <p class="text-muted small mb-3">
+            Raw JSON model cards written at training time. These capture artefact paths,
+            dataset hashes, and evaluation metrics for audit and reproducibility.
+          </p>
           <div class="mb-3">
             <div class="fw-semibold mb-1">Fraud</div>
             {% if fraud.card_pretty %}
