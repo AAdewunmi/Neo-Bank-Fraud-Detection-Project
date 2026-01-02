@@ -41,7 +41,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score
 
-import lightgbm as lgb
+try:
+    import lightgbm as lgb
+except Exception:
+    lgb = None
 
 from ml.training.utils import load_registry, save_registry, schema_hash
 from ml.training.splits import split_train_test
@@ -244,6 +247,18 @@ def main(args: argparse.Namespace) -> None:
 
     embeddings_status = "enabled"
     if use_embeddings:
+        global lgb
+        if lgb is None:
+            try:
+                import importlib
+
+                lgb = importlib.import_module("lightgbm")
+            except ImportError as exc:
+                raise ImportError(
+                    "lightgbm is required for embedding-based categorisation. "
+                    "Install it or run with --use_embeddings no."
+                ) from exc
+
         lgbm_params = {
             "n_estimators": 400,
             "learning_rate": 0.05,
