@@ -25,6 +25,7 @@ from dashboard.session_store import (
     load_scored_run,
     save_scored_run,
 )
+from ml.training.utils import load_registry
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,21 @@ def public_home(request: HttpRequest) -> HttpResponse:
     Public landing page.
     """
     return render(request, "dashboard/public_home.html")
+
+
+@ops_access_required
+def performance(request: HttpRequest) -> HttpResponse:
+    registry_path = Path(settings.BASE_DIR) / "model_registry.json"
+    registry = load_registry(str(registry_path))
+
+    fraud_info = _build_model_summary(registry, "fraud")
+    cat_info = _build_model_summary(registry, "categorisation")
+
+    context = {
+        "fraud": fraud_info,
+        "categorisation": cat_info,
+    }
+    return render(request, "dashboard/performance.html", context)
 
 
 @ops_access_required
@@ -217,6 +233,84 @@ def _coerce_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _build_model_summary(registry: dict[str, Any], section: str) -> Dict[str, Any]:
+    entry = None
+    latest = registry.get(section, {}).get("latest")
+    if latest:
+        entry = registry[section].get(latest)
+
+    summary = {
+        "latest": latest,
+        "entry": entry,
+        "metrics": {},
+        "card_json": None,
+        "card_pretty": None,
+        "summary_rows": [],
+        "card_path": None,
+        "metrics_path": None,
+    }
+
+    if not entry:
+        return summary
+
+    metrics_path = entry.get("metrics_path")
+    if metrics_path:
+        summary["metrics_path"] = metrics_path
+        metrics = _read_json_file(metrics_path)
+        if metrics:
+            summary["metrics"] = metrics
+    else:
+        summary["metrics"] = entry.get("metrics", {})
+
+    summary["summary_rows"] = _build_summary_rows(section, entry, summary["metrics"])
+
+    model_path = entry.get("artefact")
+    if model_path:
+        card_path = Path(model_path).with_suffix(".card.json")
+        if card_path.exists():
+            summary["card_path"] = str(card_path)
+            card_json = _read_json_file(str(card_path))
+            summary["card_json"] = card_json
+            summary["card_pretty"] = _pretty_json(card_json)
+
+    return summary
+
+
+def _build_summary_rows(
+    section: str, entry: dict[str, Any], metrics: dict[str, Any]
+) -> List[tuple[str, Any]]:
+    rows: List[tuple[str, Any]] = []
+    if section == "fraud":
+        rows.append(("Average precision", metrics.get("average_precision")))
+        rows.append(("Dataset", entry.get("dataset")))
+        rows.append(("Label source", entry.get("label_source") or metrics.get("label_source")))
+        rows.append(("Split", entry.get("split_type")))
+    elif section == "categorisation":
+        rows.append(("Macro F1", metrics.get("macro_f1")))
+        rows.append(("Embeddings status", metrics.get("embeddings_status")))
+        rows.append(("Label mode", entry.get("label_mode")))
+    return rows
+
+
+def _read_json_file(path: str) -> Dict[str, Any]:
+    try:
+        import json
+
+        with open(path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:
+        return {}
+
+
+def _pretty_json(payload: Dict[str, Any]) -> str:
+    try:
+        import json
+
+        return json.dumps(payload, indent=2, sort_keys=True)
+    except Exception:
+        return ""
 
 
 def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:

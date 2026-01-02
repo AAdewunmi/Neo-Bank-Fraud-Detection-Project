@@ -1,0 +1,86 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container-fluid px-0 py-4">
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+          <div>
+            <h4 class="mb-1">Model Performance</h4>
+            <p class="text-muted mb-0">Latest metrics, registry metadata, and model cards.</p>
+          </div>
+          <div class="text-muted small">
+            Staff-only view
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      {% include "dashboard/_model_insights.html" %}
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">Fraud Model Summary</div>
+        <div class="card-body">
+          {% if fraud.latest %}
+            <div class="text-muted small mb-2">Latest: {{ fraud.latest }}</div>
+            <ul class="list-unstyled mb-0">
+              {% for label, value in fraud.summary_rows %}
+                <li class="mb-1"><span class="fw-semibold">{{ label }}:</span> {{ value|default:"n/a" }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No fraud model registry entry found.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">Categorisation Model Summary</div>
+        <div class="card-body">
+          {% if categorisation.latest %}
+            <div class="text-muted small mb-2">Latest: {{ categorisation.latest }}</div>
+            <ul class="list-unstyled mb-0">
+              {% for label, value in categorisation.summary_rows %}
+                <li class="mb-1"><span class="fw-semibold">{{ label }}:</span> {{ value|default:"n/a" }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No categorisation model registry entry found.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">Model Cards (JSON)</div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="fw-semibold mb-1">Fraud</div>
+            {% if fraud.card_pretty %}
+              <pre class="small bg-light border rounded p-2 mb-0">{{ fraud.card_pretty }}</pre>
+            {% else %}
+              <p class="text-muted mb-0">No JSON model card found.</p>
+            {% endif %}
+          </div>
+          <div>
+            <div class="fw-semibold mb-1">Categorisation</div>
+            {% if categorisation.card_pretty %}
+              <pre class="small bg-light border rounded p-2 mb-0">{{ categorisation.card_pretty }}</pre>
+            {% else %}
+              <p class="text-muted mb-0">No JSON model card found.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
