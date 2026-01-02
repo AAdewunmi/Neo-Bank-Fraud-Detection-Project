@@ -10,6 +10,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Mapping
+from datetime import datetime
 
 import pandas as pd
 from django.conf import settings
@@ -45,9 +46,14 @@ def performance(request: HttpRequest) -> HttpResponse:
     fraud_info = _build_model_summary(registry, "fraud")
     cat_info = _build_model_summary(registry, "categorisation")
 
+    timestamps = [t for t in [fraud_info.get("updated_at"), cat_info.get("updated_at")] if t]
+    updated_at = max(timestamps) if timestamps else None
+
     context = {
         "fraud": fraud_info,
         "categorisation": cat_info,
+        "updated_at": updated_at,
+        "insights_generated_at": updated_at,
     }
     return render(request, "dashboard/performance.html", context)
 
@@ -241,6 +247,7 @@ def _build_model_summary(registry: dict[str, Any], section: str) -> Dict[str, An
     if latest:
         entry = registry[section].get(latest)
 
+    updated_at = _parse_registry_timestamp(latest) if latest else None
     summary = {
         "latest": latest,
         "entry": entry,
@@ -250,6 +257,7 @@ def _build_model_summary(registry: dict[str, Any], section: str) -> Dict[str, An
         "summary_rows": [],
         "card_path": None,
         "metrics_path": None,
+        "updated_at": updated_at,
     }
 
     if not entry:
@@ -311,6 +319,19 @@ def _pretty_json(payload: Dict[str, Any]) -> str:
         return json.dumps(payload, indent=2, sort_keys=True)
     except Exception:
         return ""
+
+
+def _parse_registry_timestamp(version: str) -> datetime | None:
+    if not version:
+        return None
+    digits = "".join(ch for ch in version if ch.isdigit())
+    if len(digits) < 14:
+        return None
+    try:
+        ts = datetime.strptime(digits[-14:], "%Y%m%d%H%M%S")
+        return timezone.make_aware(ts, timezone.get_current_timezone())
+    except ValueError:
+        return None
 
 
 def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
