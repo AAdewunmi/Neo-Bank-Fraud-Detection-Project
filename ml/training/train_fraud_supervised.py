@@ -15,6 +15,7 @@ Usage examples
 Synthetic lab run using a time split
 PYTHONPATH=. python -m ml.training.train_fraud_supervised \
   --input data/synthetic_transactions_large.csv \
+  --dataset synthetic \
   --label_col is_fraud \
   --synthetic yes \
   --amount_col amount \
@@ -25,12 +26,20 @@ PYTHONPATH=. python -m ml.training.train_fraud_supervised \
 
 Real label run using a group split
 PYTHONPATH=. python -m ml.training.train_fraud_supervised \
-  --input data/real_transactions.csv \
+  --input data/synthetic_transactions_large.csv \
+  --dataset synthetic \
   --label_col is_fraud \
-  --synthetic no \
+  --synthetic yes \
   --features amount velocity_24h is_international is_weekend hour \
   --split_mode group \
   --group_col customer_id \
+  --registry model_registry.json
+
+PaySim run for offline training
+PYTHONPATH=. python -m ml.training.train_fraud_supervised \
+  --input data/paysim.csv \
+  --dataset paysim \
+  --split_mode time \
   --registry model_registry.json
 """
 
@@ -79,6 +88,18 @@ def make_synthetic_labels(
         "positive_rate": float(np.mean(y)) if len(y) else 0.0,
     }
     return y, meta
+
+
+def load_paysim_csv(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    return df.rename(
+        columns={
+            "amount": "amount",
+            "nameOrig": "customer_id",
+            "step": "timestamp",
+            "isFraud": "label",
+        }
+    )
 
 
 def _resolve_features(df: pd.DataFrame, feature_names: List[str]) -> np.ndarray:
@@ -222,7 +243,16 @@ def _write_model_card(
 
 
 def main(args: argparse.Namespace) -> None:
-    df = pd.read_csv(args.input)
+    input_path = Path(args.input)
+    if not input_path.exists():
+        raise FileNotFoundError(
+            f"Input file not found: {args.input}. "
+            "Provide a valid path via --input."
+        )
+    if args.dataset == "paysim":
+        df = load_paysim_csv(args.input)
+    else:
+        df = pd.read_csv(args.input)
 
     synthetic_mode = args.synthetic.strip().lower()
     test_size = float(getattr(args, "test_size", 0.25))
@@ -231,7 +261,17 @@ def main(args: argparse.Namespace) -> None:
     group_col = getattr(args, "group_col", "customer_id")
 
     label_source = ""
-    if synthetic_mode == "yes":
+    if args.dataset == "paysim":
+        _require_columns(df, ["label"])
+        y = pd.to_numeric(df["label"], errors="coerce").fillna(0).astype(int).values
+        label_meta = {
+            "label_mode": "real",
+            "label_col": "label",
+            "positive_rate": float(np.mean(y)) if len(y) else 0.0,
+        }
+        synthetic_flag = False
+        label_source = "paysim"
+    elif synthetic_mode == "yes":
         y, label_meta = make_synthetic_labels(
             df=df,
             amount_col=args.amount_col,
@@ -387,6 +427,7 @@ def main(args: argparse.Namespace) -> None:
 
     metrics: Dict[str, Any] = {
         "average_precision": ap,
+        "dataset": args.dataset,
         "label_source": label_source,
         "label_mode": label_meta.get("label_mode"),
         "synthetic": bool(synthetic_flag),
@@ -407,7 +448,7 @@ def main(args: argparse.Namespace) -> None:
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
     reg = load_registry(args.registry)
-    section = "fraud_synthetic" if synthetic_mode == "yes" else "fraud"
+    section = "fraud_synthetic" if synthetic_flag else "fraud"
     reg.setdefault(section, {})
 
     entry = {
@@ -417,6 +458,8 @@ def main(args: argparse.Namespace) -> None:
         "features": feature_names,
         "metrics": {"average_precision": ap, "label_source": label_source},
         "type": "supervised_xgb",
+        "dataset": args.dataset,
+        "label_source": label_source,
         "risk_mode": "predict_proba",
         "feature_state_path": str(state_path),
         "feature_state_type": "customer_amount_stats_v1",
@@ -450,6 +493,7 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--input", required=True)
+    p.add_argument("--dataset", choices=["synthetic", "paysim"], default="synthetic")
     p.add_argument("--label_col", default="is_fraud")
     p.add_argument("--amount_col", default="amount")
     p.add_argument("--synthetic", default="yes")
