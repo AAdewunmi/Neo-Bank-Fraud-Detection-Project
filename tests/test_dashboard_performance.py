@@ -9,7 +9,7 @@ from django.conf import settings
 def test_performance_page_renders_latest_metrics(
     client, django_user_model, tmp_path, monkeypatch
 ) -> None:
-    user = django_user_model.objects.create_user(
+    django_user_model.objects.create_user(
         username="ops", password="pass1234", is_staff=True
     )
     client.login(username="ops", password="pass1234")
