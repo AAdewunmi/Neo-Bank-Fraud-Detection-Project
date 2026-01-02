@@ -59,6 +59,7 @@ from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import train_test_split
 
 from ml.fraud_features import FEATURE_ORDER, build_customer_state, compute_train_features
+from ml.training.model_card import write_model_card
 from ml.training.splits import split_train_test
 from ml.training.utils import load_registry, save_registry, schema_hash
 
@@ -276,6 +277,7 @@ def train(
     synthetic_flag: bool = False,
     label_source: str = "",
     registry_section: str | None = None,
+    dataset_path: str | None = None,
 ) -> Dict[str, Any]:
     if len(np.unique(y)) < 2:
         raise ValueError("Need both positive and negative labels to train and evaluate.")
@@ -438,6 +440,13 @@ def train(
         "threshold_table_csv": str(thresholds_path),
     }
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    card_path = None
+    if dataset_path is not None:
+        card_path = write_model_card(
+            str(model_path),
+            dataset_path,
+            {"average_precision": float(ap)},
+        )
 
     reg = load_registry(registry_path)
     section = registry_section or ("fraud_synthetic" if synthetic_flag else "fraud")
@@ -477,6 +486,7 @@ def train(
         "model_path": str(model_path),
         "metrics_path": str(metrics_path),
         "model_card": str(model_card_path),
+        "dataset_card": card_path,
         "average_precision": ap,
         "split_meta": split_meta,
         "positive_rate_train": pos_rate_train,
@@ -590,12 +600,15 @@ def main(args: argparse.Namespace) -> None:
         synthetic_flag=synthetic_flag,
         label_source=label_source,
         registry_section=registry_section,
+        dataset_path=args.input,
     )
 
     print(f"Saved: {result['model_path']}")
     print(f"AP (PR AUC): {result['average_precision']:.4f}")
     print(f"Metrics: {result['metrics_path']}")
-    print(f"Model card: {result['model_card']}")
+    print(f"Model card (markdown): {result['model_card']}")
+    if result.get("dataset_card"):
+        print("Model card (json):", result["dataset_card"])
     print(f"Registry section: {result['registry_section']}")
     split_meta = result.get("split_meta", {})
     print(
