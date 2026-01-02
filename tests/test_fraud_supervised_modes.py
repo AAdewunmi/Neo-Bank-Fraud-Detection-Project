@@ -86,49 +86,49 @@ def test_paysim_loader_maps_columns_correctly() -> None:
     assert y.tolist() == [0, 1]
 
 
-# def test_training_writes_model_and_metrics(tmp_path: Path, monkeypatch) -> None:
-#     """
-#     Supervised training must write artefacts and registry entries.
+def test_training_writes_model_and_metrics(tmp_path: Path, monkeypatch) -> None:
+    """
+    Supervised training must write artefacts and registry entries.
 
-#     This test uses synthetic labels only and is CI-safe.
-#     It verifies:
-#     - Model artefacts are persisted.
-#     - Metrics are written to disk.
-#     - No external datasets are required.
-#     """
-#     df = pd.DataFrame(
-#         {
-#             "amount": [10, 20, 30, 40, 50, 100],
-#             "timestamp": [1, 2, 3, 4, 5, 6],
-#             "customer_id": ["a", "a", "b", "b", "c", "c"],
-#         }
-#     )
+    This test uses synthetic labels only and is CI-safe.
+    It verifies:
+    - Model artefacts are persisted.
+    - Metrics are written to disk.
+    - No external datasets are required.
+    """
+    df = pd.DataFrame(
+        {
+            "amount": [10, 20, 30, 40, 50, 100],
+            "timestamp": [1, 2, 3, 4, 5, 6],
+            "customer_id": ["a", "a", "b", "b", "c", "c"],
+        }
+    )
 
-#     # Explicit, deterministic label vector
-#     y = np.array([0, 0, 0, 0, 1, 1])
+    # Explicit, deterministic label vector
+    y = np.array([0, 0, 0, 0, 1, 1])
 
-#     registry_path = tmp_path / "registry.json"
-#     registry_path.write_text(json.dumps({}), encoding="utf-8")
+    registry_path = tmp_path / "registry.json"
+    registry_path.write_text(json.dumps({}), encoding="utf-8")
 
-#     # Run training in an isolated filesystem context
-#     monkeypatch.chdir(tmp_path)
+    # Run training in an isolated filesystem context
+    monkeypatch.chdir(tmp_path)
 
-#     train(
-#         df=df,
-#         y=y,
-#         dataset="synthetic",
-#         registry_path=str(registry_path),
-#     )
+    train(
+        df=df,
+        y=y,
+        dataset="synthetic",
+        registry_path=str(registry_path),
+    )
 
-#     artefacts = Path("artefacts")
-#     reports = Path("reports")
+    artefacts = Path("artefacts")
+    reports = Path("reports")
 
-#     # Artefact directories must be created
-#     assert artefacts.exists()
-#     assert reports.exists()
+    # Artefact directories must be created
+    assert artefacts.exists()
+    assert reports.exists()
 
-#     # At least one model file must be written
-#     assert any(p.suffix == ".joblib" for p in artefacts.iterdir())
+    # At least one model file must be written
+    assert any(p.suffix == ".joblib" for p in artefacts.iterdir())
 
-#     # At least one metrics file must be written
-#     assert any(p.suffix == ".json" for p in reports.iterdir())
+    # At least one metrics file must be written
+    assert any(p.suffix == ".json" for p in reports.iterdir())
