@@ -146,12 +146,13 @@ class Scorer:
             fallback = Path.cwd() / "artefacts" / candidate.name
             if fallback.exists():
                 candidate = fallback
-            else:
-                raise FileNotFoundError(
-                    f"Model artefact not found: {artefact_path}. "
-                    "Retrain the model or update the registry."
-                )
-        obj = load(str(candidate))
+        try:
+            obj = load(str(candidate))
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"Model artefact not found: {artefact_path}. "
+                "Retrain the model or update the registry."
+            ) from exc
         self._artefact_cache[artefact_path] = obj
         return obj
 
