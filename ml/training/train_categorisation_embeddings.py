@@ -45,6 +45,7 @@ import lightgbm as lgb
 
 from ml.training.utils import load_registry, save_registry, schema_hash
 from ml.training.splits import split_train_test
+from ml.training.model_card import write_model_card
 
 sys.modules.setdefault("ml.training.train_categorisation_embeddings", sys.modules[__name__])
 
@@ -304,6 +305,9 @@ def main(args: argparse.Namespace) -> None:
 
     dump(predictor, model_path)
 
+    card_path = write_model_card(str(model_path), args.input, {"macro_f1": float(macro_f1)})
+    print("Model card:", card_path)
+
     reg = load_registry(args.registry)
     section = "categorisation_synthetic" if synthetic_flag else "categorisation"
     reg.setdefault(section, {})
@@ -337,7 +341,7 @@ def main(args: argparse.Namespace) -> None:
 
     print(f"Saved: {model_path}")
     print(f"Macro F1: {macro_f1:.4f}")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred, zero_division=0))
     print(f"Registry section: {section}")
 
 
