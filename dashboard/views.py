@@ -15,7 +15,7 @@ from datetime import datetime
 import pandas as pd
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from dashboard.decorators import ops_access_required
@@ -23,6 +23,7 @@ from dashboard.forms import FilterForm, UploadForm
 from dashboard import services
 from dashboard.session_store import (
     build_scored_run,
+    clear_scored_run,
     load_scored_run,
     save_scored_run,
 )
@@ -36,6 +37,13 @@ def public_home(request: HttpRequest) -> HttpResponse:
     Public landing page.
     """
     return render(request, "dashboard/public_home.html")
+
+
+@ops_access_required
+def reset_run(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        clear_scored_run(request.session)
+    return redirect("dashboard:index")
 
 
 @ops_access_required

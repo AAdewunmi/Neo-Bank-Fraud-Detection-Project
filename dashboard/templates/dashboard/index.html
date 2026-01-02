@@ -31,14 +31,24 @@
               <div class="form-text">Higher means fewer flags.</div>
             </div>
 
-            <button id="score-submit" class="btn btn-dark w-100" type="submit">
-              Validate and score
-            </button>
+            <div class="d-grid gap-2">
+              <button id="score-submit" class="btn btn-dark w-100" type="submit">
+                Validate and score
+              </button>
+            </div>
 
             <div id="score-progress" class="alert alert-info mt-3 mb-0 d-none">
               Scoring in progress. Keep this tab open. First run may download the embedding model.
             </div>
           </form>
+          {% if has_results %}
+            <form class="mt-2" method="post" action="{% url 'dashboard:reset_run' %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-secondary w-100" type="submit">
+                Reset results
+              </button>
+            </form>
+          {% endif %}
 
         </div>
       </div>
@@ -88,11 +98,8 @@
 
     <div class="col-lg-9">
       <div class="row g-3">
-        <div class="col-lg-8">
+        <div class="col-12">
           {% include "dashboard/_kpis.html" %}
-        </div>
-        <div class="col-lg-4">
-          {% include "dashboard/_model_insights.html" %}
         </div>
       </div>
 
