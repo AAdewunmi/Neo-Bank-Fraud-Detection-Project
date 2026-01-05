@@ -41,4 +41,21 @@ def _canonicalise_text(value: Any) -> str:
     return str(value).strip()
 
 
+def _canonicalise_amount(value: Any) -> str:
+    """
+    Canonicalise amount to a stable decimal string where possible.
+
+    CSV inputs sometimes vary between "10", "10.0", and 10.0.
+    Canonicalising reduces accidental row_id drift.
+    """
+    if value is None:
+        return ""
+    try:
+        d = Decimal(str(value).strip())
+    except (InvalidOperation, ValueError):
+        return _canonicalise_text(value)
+
+    # Normalize removes exponent and trailing zeros in most cases.
+    # Example: Decimal("10.0") -> "10"
+    return format(d.normalize(), "f")
 
