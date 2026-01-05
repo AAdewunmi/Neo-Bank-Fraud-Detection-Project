@@ -90,3 +90,30 @@ class FilterForm(forms.Form):
         widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01",
                                         "placeholder": "0.00"}),
     )
+
+
+class EditCategoryForm(forms.Form):
+    """
+    Form for a single inline category edit.
+
+    Fields:
+        row_id: Stable identifier for the transaction row.
+        new_category: The edited category label.
+    """
+
+    row_id = forms.CharField(required=True, max_length=64)
+    new_category = forms.CharField(required=True, max_length=50)
+
+    def clean_new_category(self) -> str:
+        """
+        Validate and normalise the category string.
+
+        Production-style guardrails:
+        - Trim whitespace
+        - Reject blank strings
+        - Enforce a small maximum length (handled by field max_length)
+        """
+        value = self.cleaned_data["new_category"].strip()
+        if not value:
+            raise forms.ValidationError("Category cannot be blank.")
+        return value
