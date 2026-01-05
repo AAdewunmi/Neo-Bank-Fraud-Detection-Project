@@ -59,3 +59,23 @@ def _canonicalise_amount(value: Any) -> str:
     # Example: Decimal("10.0") -> "10"
     return format(d.normalize(), "f")
 
+
+def compute_row_id(row: Mapping[str, Any]) -> str:
+    """
+    Compute a stable row_id from a transaction row.
+
+    Args:
+        row: A mapping containing at least the ROW_ID_FIELDS keys.
+
+    Returns:
+        Hex string SHA-256 hash representing the stable row identifier.
+    """
+    parts: list[str] = []
+    for key in ROW_ID_FIELDS:
+        if key == "amount":
+            parts.append(_canonicalise_amount(row.get(key)))
+        else:
+            parts.append(_canonicalise_text(row.get(key)))
+
+    canonical = "|".join(parts)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
