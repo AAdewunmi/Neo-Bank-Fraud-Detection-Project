@@ -79,3 +79,35 @@ def compute_row_id(row: Mapping[str, Any]) -> str:
 
     canonical = "|".join(parts)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class RowIdentity:
+    """
+    Stable identifiers for a row, suitable for export as feedback.
+
+    This is the minimum we want to carry forward for retraining later.
+    """
+    row_id: str
+    timestamp: str
+    customer_id: str
+    amount: str
+    merchant: str
+    description: str
+
+
+def extract_identity(row: Mapping[str, Any]) -> RowIdentity:
+    """
+    Extract RowIdentity from a row dict.
+
+    The row_id is computed from the canonical fields.
+    """
+    base = {
+        "timestamp": _canonicalise_text(row.get("timestamp")),
+        "customer_id": _canonicalise_text(row.get("customer_id")),
+        "amount": _canonicalise_amount(row.get("amount")),
+        "merchant": _canonicalise_text(row.get("merchant")),
+        "description": _canonicalise_text(row.get("description")),
+    }
+    rid = compute_row_id(base)
+    return RowIdentity(row_id=rid, **base)
