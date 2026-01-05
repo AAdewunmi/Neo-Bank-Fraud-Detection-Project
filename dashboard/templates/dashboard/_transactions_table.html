@@ -45,7 +45,7 @@
           <th>Description</th>
           <th class="text-end text-nowrap">Amount</th>
           <th style="min-width: 220px;">Category</th>
-          <th class="text-nowrap">Cat Conf</th>
+          <th class="text-nowrap">Cat. Conf.</th>
           <th class="text-nowrap">Fraud Risk</th>
           <th>Status</th>
         </tr>
@@ -81,8 +81,28 @@
 
             <div class="small text-muted mt-1">Edit and press Enter</div>
           </td>
-          <td>{{ r.category_confidence }}</td>
-          <td>{{ r.fraud_risk }}</td>
+          <td class="text-nowrap">
+            {% if r.category_confidence is not None %}
+              {% widthratio r.category_confidence 1 100 %}%
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="text-nowrap">
+            {% if r.fraud_risk is not None %}
+              {% if r.fraud_risk|floatformat:2 >= 0.7 %}
+                <span class="badge bg-danger">
+              {% elif r.fraud_risk|floatformat:2 >= 0.4 %}
+                <span class="badge bg-warning text-dark">
+              {% else %}
+                <span class="badge bg-success">
+              {% endif %}
+                {% widthratio r.fraud_risk 1 100 %}%
+              </span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
           <td>
             {% if r.flagged or r.fraud_flag %}
               <span class="badge bg-danger">Flagged</span>
