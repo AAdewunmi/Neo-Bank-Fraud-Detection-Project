@@ -44,7 +44,7 @@
           <th>Merchant</th>
           <th>Description</th>
           <th class="text-end text-nowrap">Amount</th>
-          <th>Category</th>
+          <th style="min-width: 220px;">Category</th>
           <th class="text-nowrap">Cat Conf</th>
           <th class="text-nowrap">Fraud Risk</th>
           <th>Status</th>
@@ -61,7 +61,26 @@
             {{ r.description }}
           </td>
           <td class="text-end text-nowrap">{{ r.amount }}</td>
-          <td>{{ r.category }}</td>
+          <td>
+            <form action="{% url 'dashboard:apply_edit' %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="row_id" value="{{ r.row_id }}">
+              <input type="text"
+                     class="form-control form-control-sm"
+                     name="new_category"
+                     value="{{ r.category }}">
+            </form>
+
+            <div class="mt-1">
+              {% if r.category_source == "edit" %}
+                <span class="badge text-bg-warning">Edit</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Model</span>
+              {% endif %}
+            </div>
+
+            <div class="small text-muted mt-1">Edit and press Enter</div>
+          </td>
           <td>{{ r.category_confidence }}</td>
           <td>{{ r.fraud_risk }}</td>
           <td>
