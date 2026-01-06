@@ -1,6 +1,5 @@
+# dashboard/views.py
 """
-dashboard/views.py
-
 Views for the dashboard app.
 
 This module preserves existing Week 1–3 behaviour:
@@ -10,17 +9,20 @@ This module preserves existing Week 1–3 behaviour:
 - KPI summary and insights timestamp display
 - Performance view sourced from model_registry.json
 
-Week 4 additions (Day 1 feedback loop):
+Week 4 additions (feedback loop and rules overlay):
 - Stable row_id per row to make feedback durable across ordering changes
 - Session-backed category edits keyed by row_id
 - Merge edits rather than overwrite
 - Overlay edits on render so Ops sees changes immediately
 - Export feedback edits as feedback_edits.csv with stable identifiers
+- Rules overlay applied after model scoring with audit tagging
 
-Notes:
-- Precedence in this file is edit > existing category values.
-- Rules overlay (edit > rule > model) can be layered later by stamping category_source
-  and adjusting precedence, without changing edit persistence mechanics.
+Precedence:
+- edit > rule > model
+
+Audit:
+- category_source indicates where the displayed category came from (model, rule, edit)
+- predicted_category preserves model output for retraining/audit, even when rules or edits override
 """
 
 from __future__ import annotations
@@ -44,7 +46,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from dashboard import services
 from dashboard.decorators import ops_access_required
-from dashboard.forms import FilterForm, UploadForm
+from dashboard.forms import EditCategoryForm, FilterForm, UploadForm
+from dashboard.rules import apply_rules, load_rules
 from dashboard.session_store import (
     build_scored_run,
     clear_scored_run,
@@ -61,6 +64,12 @@ CATEGORY_EDITS_SESSION_KEY = "category_edits"
 def public_home(request: HttpRequest) -> HttpResponse:
     """
     Public landing page.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        Rendered public landing page.
     """
     return render(request, "dashboard/public_home.html")
 
@@ -68,7 +77,13 @@ def public_home(request: HttpRequest) -> HttpResponse:
 @ops_access_required
 def reset_run(request: HttpRequest) -> HttpResponse:
     """
-    Clears the current scored run from session.
+    Clear the current scored run from session.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        Redirect to dashboard index.
     """
     if request.method == "POST":
         clear_scored_run(request.session)
@@ -79,6 +94,12 @@ def reset_run(request: HttpRequest) -> HttpResponse:
 def performance(request: HttpRequest) -> HttpResponse:
     """
     Model performance page driven by model_registry.json.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        Rendered performance page.
     """
     registry_path = Path(settings.BASE_DIR) / "model_registry.json"
     registry = load_registry(str(registry_path))
@@ -104,20 +125,26 @@ def index(request: HttpRequest) -> HttpResponse:
     Dashboard index.
 
     GET:
-        - Loads the current scored run from session.
-        - Ensures each row has a stable row_id.
-        - Overlays any stored category edits so the UI reflects corrections.
-        - Applies filter form (flagged only, customer, merchant, category, min risk).
+        - Load scored run from session.
+        - Ensure each row has a stable row_id.
+        - Overlay stored category edits so UI reflects corrections.
+        - Apply filter form (flagged only, customer, merchant, category, min risk).
 
     POST:
-        - Handles CSV upload and scoring using existing Week 1–3 services.
-        - Stores a preview run in session_store.
-        - Ensures stable row_id values exist in preview rows.
-        - Overlays existing edits so previously corrected rows show as edited.
+        - Handle CSV upload and scoring using existing Week 1–3 services.
+        - Apply rules overlay (rule > model) with audit tagging.
+        - Store a preview run in session_store.
+        - Ensure stable row_id values exist in preview rows.
+        - Overlay edits (edit > rule > model) so previously corrected rows display as edited.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        Rendered dashboard page.
     """
     stored_run = load_scored_run(request.session)
 
-    # Ensure current rows have stable row_id, then overlay edits for display.
     base_rows: List[Mapping[str, Any]] = stored_run.rows if stored_run else []
     run_meta = stored_run.run_meta if stored_run else {}
 
@@ -141,9 +168,7 @@ def index(request: HttpRequest) -> HttpResponse:
         "threshold": run_meta.get("threshold"),
         "export_available": bool(base_rows),
         "kpi": _build_kpis(run_meta),
-        "insights_generated_at": _format_insights_timestamp(
-            _resolve_insights_timestamp(run_meta)
-        ),
+        "insights_generated_at": _format_insights_timestamp(_resolve_insights_timestamp(run_meta)),
         "error": None,
     }
 
@@ -161,6 +186,17 @@ def index(request: HttpRequest) -> HttpResponse:
         try:
             df = services.read_csv(uploaded)
             scored_df, diags = services.score_df(df=df, threshold=threshold)
+
+            # Preserve model output for audit before rules overlay changes category.
+            if "predicted_category" not in scored_df.columns:
+                scored_df["predicted_category"] = scored_df.get("category")
+            if "category_source" not in scored_df.columns:
+                scored_df["category_source"] = "model"
+
+            # Apply rules overlay (rule > model). Edits will overlay later (edit > rule > model).
+            rules_path = Path(settings.BASE_DIR) / "rules" / "category_overrides.json"
+            rules = load_rules(str(rules_path))
+            scored_df = apply_rules(scored_df, rules)
 
             diags_payload = {
                 "threshold": float(threshold),
@@ -184,7 +220,7 @@ def index(request: HttpRequest) -> HttpResponse:
             preview_df = scored_df.head(max_preview_rows)
             rows_truncated = bool(total_tx_count > len(preview_df))
 
-            # Preserve your current behaviour: prioritise flagged rows in preview.
+            # Preserve current behaviour: prioritise flagged rows in preview.
             if rows_truncated:
                 flagged_col = None
                 if flagged_key in scored_df.columns:
@@ -205,7 +241,6 @@ def index(request: HttpRequest) -> HttpResponse:
                             preview_df = flagged_rows.head(max_preview_rows)
                         rows_truncated = bool(total_tx_count > len(preview_df))
 
-            # Convert to records and attach stable row_id so edits can key reliably.
             preview_records: List[Dict[str, Any]] = preview_df.to_dict(orient="records")
             preview_records = _ensure_row_ids(preview_records)
 
@@ -228,16 +263,14 @@ def index(request: HttpRequest) -> HttpResponse:
 
             save_scored_run(request.session, scored_run)
 
-            # Re-load and display with edit overlay (so previously edited rows show immediately).
+            # Re-load and display with edit overlay.
             stored_run = load_scored_run(request.session)
             base_rows = stored_run.rows if stored_run else []
             run_meta = stored_run.run_meta if stored_run else {}
 
             base_rows_with_ids = _ensure_row_ids(list(base_rows))
             edits = _get_category_edits(request.session)
-            edits = _migrate_index_based_edits_if_needed(
-                request.session, base_rows_with_ids, edits
-            )
+            edits = _migrate_index_based_edits_if_needed(request.session, base_rows_with_ids, edits)
             display_rows = _overlay_category_edits(base_rows_with_ids, edits)
 
             filtered_rows, view_meta = _apply_filters(
@@ -288,22 +321,30 @@ def apply_edit(request: HttpRequest) -> HttpResponse:
     Behaviour:
         - Merges into existing edits, does not overwrite the whole edit set.
         - Latest edit for a given row_id wins.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        Redirect to dashboard index.
     """
-    row_id = str(request.POST.get("row_id", "")).strip()
-    new_category = str(request.POST.get("new_category", "")).strip()
-
-    if not row_id or len(row_id) != 64:
+    form = EditCategoryForm(request.POST)
+    if not form.is_valid():
+        request.session["last_error"] = "Invalid edit input."
+        request.session.modified = True
         return redirect("dashboard:index")
 
-    if not new_category:
-        return redirect("dashboard:index")
+    row_id = str(form.cleaned_data["row_id"]).strip()
+    new_category = str(form.cleaned_data["new_category"]).strip()
 
-    # Small production-style guardrail, keeps categories sane in a demo.
+    # Production-style guardrail for demo safety.
     if len(new_category) > 50:
         new_category = new_category[:50]
 
     stored_run = load_scored_run(request.session)
     if not stored_run or not stored_run.rows:
+        request.session["last_error"] = "Edit failed: no scored run in session."
+        request.session.modified = True
         return redirect("dashboard:index")
 
     rows_with_ids = _ensure_row_ids(list(stored_run.rows))
@@ -311,23 +352,21 @@ def apply_edit(request: HttpRequest) -> HttpResponse:
     base = row_lookup.get(row_id)
 
     if base is None:
+        request.session["last_error"] = "Edit failed: row not found in current session."
+        request.session.modified = True
         return redirect("dashboard:index")
 
     edits = _get_category_edits(request.session)
 
     payload = {
         "row_id": row_id,
-        # Stable identifiers for retraining join.
         "timestamp": str(base.get("timestamp", "")),
         "customer_id": str(base.get("customer_id", "")),
         "amount": str(base.get("amount", "")),
         "merchant": str(base.get("merchant", "")),
         "description": str(base.get("description", "")),
-        # Audit of what the system predicted before human correction.
         "predicted_category": str(base.get("predicted_category", base.get("category", ""))),
-        # The analyst correction.
         "new_category": new_category,
-        # Optional metadata, useful later.
         "edited_at": timezone.now().isoformat(),
     }
 
@@ -350,6 +389,12 @@ def export_feedback(request: HttpRequest) -> HttpResponse:
     Notes:
         - Deterministic ordering by row_id to make diffs stable.
         - This export is designed as a retraining input in later labs.
+
+    Args:
+        request: Django request.
+
+    Returns:
+        CSV file download response.
     """
     edits = _get_category_edits(request.session)
 
@@ -401,6 +446,14 @@ def _apply_filters(
     Important:
         This function expects rows already have edits overlaid so that filters reflect
         the edited category values.
+
+    Args:
+        request: Django request.
+        rows: Display rows.
+        flagged_key: Column name used to determine flagged status.
+
+    Returns:
+        Tuple of filtered rows and view metadata.
     """
     form = FilterForm(request.GET or None)
     if not form.is_valid() or not rows:
@@ -437,6 +490,15 @@ def _apply_filters(
 
 
 def _coerce_flagged(value: Any) -> bool:
+    """
+    Coerce various truthy string values into a boolean.
+
+    Args:
+        value: Any value.
+
+    Returns:
+        Boolean interpretation of value.
+    """
     if isinstance(value, str):
         lowered = value.strip().lower()
         if lowered in {"1", "true", "yes", "y", "t"}:
@@ -447,6 +509,15 @@ def _coerce_flagged(value: Any) -> bool:
 
 
 def _coerce_float(value: Any) -> float | None:
+    """
+    Safely coerce to float.
+
+    Args:
+        value: Any value.
+
+    Returns:
+        Float value, or None if conversion fails.
+    """
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -458,6 +529,12 @@ def _canonicalise_text(value: Any) -> str:
     Convert a value into a stable string representation.
 
     Normalises whitespace and guards None.
+
+    Args:
+        value: Any value.
+
+    Returns:
+        Canonicalised string.
     """
     if value is None:
         return ""
@@ -468,7 +545,14 @@ def _canonicalise_amount(value: Any) -> str:
     """
     Canonicalise amount to reduce row_id drift due to formatting.
 
-    Example: "10.0" and "10" should map to the same canonical amount.
+    Example:
+        "10.0" and "10" should map to the same canonical amount.
+
+    Args:
+        value: Any amount-like value.
+
+    Returns:
+        Canonicalised amount string.
     """
     if value is None:
         return ""
@@ -485,6 +569,12 @@ def _compute_row_id(row: Mapping[str, Any]) -> str:
 
     This is stable across filtering and ordering, and is suitable as a join key
     for feedback edits.
+
+    Args:
+        row: Row mapping.
+
+    Returns:
+        64-character hex SHA256 digest.
     """
     parts = [
         _canonicalise_text(row.get("timestamp")),
@@ -502,10 +592,10 @@ def _ensure_row_ids(rows: List[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     Ensure each row dict includes a stable row_id.
 
     Args:
-        rows: list of row mappings (likely loaded from session_store rows)
+        rows: List of row mappings.
 
     Returns:
-        A list of mutable dicts where each has a "row_id" field.
+        List of mutable dicts where each has a "row_id" field.
     """
     out: List[Dict[str, Any]] = []
     for r in rows:
@@ -523,8 +613,11 @@ def _get_category_edits(session: Any) -> Dict[str, Dict[str, Any]]:
     Current format:
         { row_id: { row_id, ..., new_category, ... } }
 
-    Backward compatibility:
-        If older format exists, migration is handled elsewhere.
+    Args:
+        session: Django session.
+
+    Returns:
+        Dict of edits keyed by row_id.
     """
     raw = session.get(CATEGORY_EDITS_SESSION_KEY, {})
     if isinstance(raw, dict):
@@ -548,6 +641,14 @@ def _migrate_index_based_edits_if_needed(
     - rows exist and indices are in range
 
     Once migrated, session is updated to the dict format.
+
+    Args:
+        session: Django session.
+        rows: Current displayed rows.
+        edits: Existing edits dict.
+
+    Returns:
+        Updated edits dict.
     """
     raw = session.get(CATEGORY_EDITS_SESSION_KEY)
 
@@ -601,12 +702,20 @@ def _overlay_category_edits(
     Overlay edits onto the displayed rows.
 
     If an edit exists for a row_id:
-        - set category to new_category
-        - set category_source to 'edit'
-        - preserve predicted_category for audit
+        - category becomes new_category
+        - category_source becomes "edit"
+        - predicted_category is preserved for audit
 
     If no edit exists:
-        - ensure category_source is present (default 'model')
+        - category_source defaults to existing value or "model"
+        - predicted_category defaults to existing value or current category
+
+    Args:
+        rows: Display rows (may include rule overlay results).
+        edits: Edits keyed by row_id.
+
+    Returns:
+        Rows with edits overlaid.
     """
     rows_with_ids = _ensure_row_ids(rows)
     out: List[Dict[str, Any]] = []
@@ -617,7 +726,7 @@ def _overlay_category_edits(
 
         if rid and rid in edits:
             e = edits[rid]
-            row.setdefault("predicted_category", row.get("category"))
+            row.setdefault("predicted_category", row.get("predicted_category", row.get("category")))
             row["category"] = e.get("new_category", row.get("category"))
             row["category_source"] = "edit"
         else:
@@ -630,6 +739,16 @@ def _overlay_category_edits(
 
 
 def _build_model_summary(registry: dict[str, Any], section: str) -> Dict[str, Any]:
+    """
+    Build a summary payload for a model section from the registry.
+
+    Args:
+        registry: Parsed registry JSON.
+        section: "fraud" or "categorisation".
+
+    Returns:
+        Summary dict used by the performance view.
+    """
     entry = None
     latest = registry.get(section, {}).get("latest")
     if latest:
@@ -677,6 +796,17 @@ def _build_model_summary(registry: dict[str, Any], section: str) -> Dict[str, An
 def _build_summary_rows(
     section: str, entry: dict[str, Any], metrics: dict[str, Any]
 ) -> List[tuple[str, Any]]:
+    """
+    Convert metrics and entry info into display-ready rows.
+
+    Args:
+        section: "fraud" or "categorisation".
+        entry: Registry entry dict.
+        metrics: Parsed metrics dict.
+
+    Returns:
+        List of key-value tuples.
+    """
     rows: List[tuple[str, Any]] = []
     if section == "fraud":
         rows.append(("Average precision", metrics.get("average_precision")))
@@ -691,6 +821,15 @@ def _build_summary_rows(
 
 
 def _read_json_file(path: str) -> Dict[str, Any]:
+    """
+    Read a JSON file into a dict.
+
+    Args:
+        path: File path.
+
+    Returns:
+        Parsed JSON dict or empty dict on failure.
+    """
     try:
         import json
 
@@ -701,6 +840,15 @@ def _read_json_file(path: str) -> Dict[str, Any]:
 
 
 def _pretty_json(payload: Dict[str, Any]) -> str:
+    """
+    Pretty-print JSON payload for display.
+
+    Args:
+        payload: JSON-like dict.
+
+    Returns:
+        Indented JSON string, or empty string on failure.
+    """
     try:
         import json
 
@@ -710,6 +858,15 @@ def _pretty_json(payload: Dict[str, Any]) -> str:
 
 
 def _parse_registry_timestamp(version: str) -> datetime | None:
+    """
+    Parse the registry version string into an aware datetime, best effort.
+
+    Args:
+        version: Registry version key, expected to contain YYYYMMDDHHMMSS digits.
+
+    Returns:
+        A timezone-aware datetime, or None if parsing fails.
+    """
     if not version:
         return None
     digits = "".join(ch for ch in version if ch.isdigit())
@@ -723,6 +880,15 @@ def _parse_registry_timestamp(version: str) -> datetime | None:
 
 
 def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
+    """
+    Build KPI values for the UI.
+
+    Args:
+        run_meta: Stored run metadata.
+
+    Returns:
+        KPI dict.
+    """
     return {
         "tx_count": int(run_meta.get("tx_count", run_meta.get("n", 0)) or 0),
         "pct_flagged": float(run_meta.get("pct_flagged", 0.0) or 0.0),
@@ -731,6 +897,12 @@ def _build_kpis(run_meta: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def _load_insights_timestamp() -> str | None:
+    """
+    Load insights timestamp from known artefact locations.
+
+    Returns:
+        Timestamp string or None if not found.
+    """
     base_dir = Path(getattr(settings, "BASE_DIR", "."))
     for path in (
         base_dir / "artefacts" / "fraud_insights_timestamp.txt",
@@ -746,6 +918,18 @@ def _load_insights_timestamp() -> str | None:
 
 
 def _resolve_insights_timestamp(run_meta: Mapping[str, Any]) -> str | None:
+    """
+    Decide which timestamp to display for insights.
+
+    Prefers:
+        - Run timestamp when it is newer than file timestamp.
+
+    Args:
+        run_meta: Stored run metadata.
+
+    Returns:
+        Timestamp string or None.
+    """
     file_ts = _load_insights_timestamp()
     run_ts = run_meta.get("scored_at") if isinstance(run_meta, Mapping) else None
     if not file_ts:
@@ -760,6 +944,15 @@ def _resolve_insights_timestamp(run_meta: Mapping[str, Any]) -> str | None:
 
 
 def _format_insights_timestamp(value: str | None) -> str | None:
+    """
+    Format insights timestamp for display.
+
+    Args:
+        value: Timestamp string.
+
+    Returns:
+        Formatted timestamp string or None.
+    """
     if not value:
         return None
     dt = pd.to_datetime(value, errors="coerce")
