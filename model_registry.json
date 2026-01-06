@@ -88,7 +88,9 @@
         "merchant",
         "description"
       ],
-      "type": "tfidf_logreg"
+      "type": "tfidf_logreg",
+      "dataset_path": "data/sample_transactions.csv",
+      "card_json": "artefacts/cat_lr_20260105182004.card.json"
     },
     "cat_minilm_lgbm_20251229195737": {
       "artefact": "artefacts/cat_minilm_lgbm_20251229195737.joblib",
@@ -703,7 +705,9 @@
       "schema_hash": "ea305a9a2914bdebe82a448ec79af04b5e2b012914929e447b7ad9996e717c70",
       "split_type": "time",
       "synthetic": false,
-      "type": "supervised_xgb"
+      "type": "supervised_xgb",
+      "dataset_path": "data/paysim.csv",
+      "card_json": "artefacts/fraud_xgb_20260102125712.card.json"
     },
     "fraud_xgb_20260102132206": {
       "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-133/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260102132206.joblib",

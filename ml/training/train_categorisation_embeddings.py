@@ -341,6 +341,8 @@ def main(args: argparse.Namespace) -> None:
         "synthetic": bool(synthetic_flag),
         "synthetic_note": "synthetic_labels" if synthetic_flag else "real_labels",
         "label_mode": label_meta.get("label_mode"),
+        "dataset_path": str(args.input),
+        "card_json": str(card_path),
     }
     model_card_path = _write_model_card(
         artefacts_dir=artefacts,

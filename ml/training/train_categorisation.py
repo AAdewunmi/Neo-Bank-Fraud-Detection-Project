@@ -34,6 +34,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
+from ml.training.model_card import write_model_card
 from ml.training.utils import schema_hash, load_registry, save_registry
 
 
@@ -251,6 +252,11 @@ def main(args: argparse.Namespace) -> None:
     version = f"{version_prefix}_{pd.Timestamp.utcnow():%Y%m%d%H%M%S}"
     artefact_path = artefacts_dir / f"{version}.joblib"
     dump(pipeline, artefact_path)
+    card_json_path = write_model_card(
+        str(artefact_path),
+        args.input,
+        {"macro_f1": float(macro_f1)},
+    )
 
     registry = load_registry(args.registry)
     section = "categorisation_synthetic" if synthetic_flag else "categorisation"
@@ -271,6 +277,8 @@ def main(args: argparse.Namespace) -> None:
         "synthetic": bool(synthetic_flag),
         "synthetic_note": "synthetic_labels" if synthetic_flag else "real_labels",
         "label_mode": label_meta.get("label_mode"),
+        "dataset_path": str(args.input),
+        "card_json": str(card_json_path),
     }
     model_card_path = _write_model_card(
         artefacts_dir=artefacts_dir,

@@ -467,6 +467,7 @@ def train(
         "synthetic": bool(synthetic_flag),
         "label_mode": resolved_label_meta.get("label_mode"),
         "split_type": split_meta.get("split_type"),
+        "dataset_path": dataset_path,
     }
 
     model_card_path = _write_model_card(
@@ -477,6 +478,8 @@ def train(
         split_meta=split_meta,
     )
     entry["model_card"] = str(model_card_path)
+    if card_path:
+        entry["card_json"] = str(card_path)
 
     reg[section][version] = entry
     reg[section]["latest"] = version
