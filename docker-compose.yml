@@ -45,6 +45,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ./artefacts:/app/artefacts:ro
     command: >
       sh -c "
       python manage.py migrate &&
