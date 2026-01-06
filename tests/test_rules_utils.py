@@ -5,8 +5,6 @@ Targeted unit tests to cover rules + utils helpers.
 from __future__ import annotations
 
 import pandas as pd
-import pytest
-
 from dashboard import rules
 from dashboard.forms import EditCategoryForm
 from dashboard.utils import _canonicalise_amount, compute_row_id, extract_identity
