@@ -1433,7 +1433,7 @@
       "synthetic": false,
       "type": "supervised_xgb"
     },
-    "latest": "fraud_xgb_20260106175507"
+    "latest": "fraud_xgb_20260102125712"
   },
   "fraud_synthetic": {
     "fraud_xgb_synth_20251231172209": {
