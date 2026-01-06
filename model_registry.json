@@ -1121,7 +1121,59 @@
       "synthetic": false,
       "type": "supervised_xgb"
     },
-    "latest": "fraud_if_20260105182023"
+    "fraud_xgb_20260106172406": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-180/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172406.joblib",
+      "dataset": "synthetic",
+      "feature_state_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-180/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172406_customer_state.csv",
+      "feature_state_type": "customer_amount_stats_v1",
+      "features": [
+        "amount",
+        "amount_z",
+        "amount_mean_cust",
+        "amount_std_cust",
+        "hour"
+      ],
+      "label_mode": "real",
+      "label_source": "real_label_col_is_fraud",
+      "metrics": {
+        "average_precision": 0.9999999999999999,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-180/test_trainer_writes_metrics_an0/reports/fraud_xgb_20260106172406_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-180/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172406_model_card.md",
+      "risk_mode": "predict_proba",
+      "schema_hash": "ea305a9a2914bdebe82a448ec79af04b5e2b012914929e447b7ad9996e717c70",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "fraud_xgb_20260106172413": {
+      "artefact": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-181/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172413.joblib",
+      "dataset": "synthetic",
+      "feature_state_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-181/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172413_customer_state.csv",
+      "feature_state_type": "customer_amount_stats_v1",
+      "features": [
+        "amount",
+        "amount_z",
+        "amount_mean_cust",
+        "amount_std_cust",
+        "hour"
+      ],
+      "label_mode": "real",
+      "label_source": "real_label_col_is_fraud",
+      "metrics": {
+        "average_precision": 0.9999999999999999,
+        "label_source": "real_label_col_is_fraud"
+      },
+      "metrics_path": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-181/test_trainer_writes_metrics_an0/reports/fraud_xgb_20260106172413_metrics.json",
+      "model_card": "/private/var/folders/jx/qlmwmf0s2t19kpfr8k_7zgyc0000gn/T/pytest-of-adrianadewunmi/pytest-181/test_trainer_writes_metrics_an0/artefacts/fraud_xgb_20260106172413_model_card.md",
+      "risk_mode": "predict_proba",
+      "schema_hash": "ea305a9a2914bdebe82a448ec79af04b5e2b012914929e447b7ad9996e717c70",
+      "split_type": "random_stratified",
+      "synthetic": false,
+      "type": "supervised_xgb"
+    },
+    "latest": "fraud_xgb_20260106172413"
   },
   "fraud_synthetic": {
     "fraud_xgb_synth_20251231172209": {
