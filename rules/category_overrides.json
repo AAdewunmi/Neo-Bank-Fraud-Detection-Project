@@ -1,0 +1,5 @@
+[
+  {"contains": "uber", "category": "Transport"},
+  {"contains": "coffee", "category": "Food & Drink"},
+  {"contains": "grocer", "category": "Groceries"}
+]
