@@ -15,9 +15,28 @@ from django.urls import reverse
 pytestmark = pytest.mark.django_db
 
 
-def test_edit_wins_over_rule(client, django_user_model):
+def test_edit_wins_over_rule(client, django_user_model, monkeypatch):
     user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
     client.force_login(user)
+
+    def fake_score_df(df, threshold):
+        df = df.copy()
+        df["category"] = "ModelCat"
+        df["category_source"] = "model"
+        df["category_confidence"] = 0.9
+        df["fraud_risk"] = 0.1
+        df["flagged"] = False
+        diags = {
+            "pct_flagged": 0.0,
+            "pct_auto_categorised": 1.0,
+            "threshold": threshold,
+            "n": len(df),
+        }
+        return df, diags
+
+    import dashboard.services as services
+
+    monkeypatch.setattr(services, "score_df", fake_score_df)
 
     content = (
         "timestamp,amount,customer_id,merchant,description,category\n"
