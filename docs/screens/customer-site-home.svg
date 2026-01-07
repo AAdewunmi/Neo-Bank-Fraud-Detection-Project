@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#f8fafc" />
+  <rect x="80" y="80" width="1040" height="515" rx="24" fill="#ffffff" stroke="#e2e8f0" />
+  <text x="120" y="150" font-family="Arial, sans-serif" font-size="28" fill="#0f172a">Customer Site - Overview (Placeholder)</text>
+  <rect x="120" y="190" width="420" height="120" rx="16" fill="#eef2ff" />
+  <text x="140" y="230" font-family="Arial, sans-serif" font-size="18" fill="#1e293b">Fraud status card</text>
+  <rect x="120" y="340" width="880" height="180" rx="16" fill="#f8fafc" stroke="#e2e8f0" />
+  <text x="140" y="380" font-family="Arial, sans-serif" font-size="18" fill="#1e293b">Recent transactions table</text>
+  <text x="120" y="585" font-family="Arial, sans-serif" font-size="14" fill="#64748b">Replace with real screenshot of /customer/</text>
+</svg>

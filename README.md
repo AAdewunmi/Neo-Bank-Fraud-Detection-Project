@@ -123,6 +123,23 @@ Expected feedback columns:
 
 ---
 
+## Customer site (Week 4)
+
+Purpose:
+- A separate, read-only customer experience focused on clarity and minimal data exposure.
+- No fraud scores, thresholds, model internals, or Ops controls are shown.
+
+Workflow:
+- Visit `/customer/` to review recent transactions and month-to-date spend by category.
+- Customers can report a transaction as not theirs with an optional note.
+- Customer flags are stored as a separate feedback stream and exported as `customer_flags.csv`.
+
+Screenshots (placeholders):
+- ![Customer site overview](docs/screens/customer-site-home.svg)
+- ![Customer flagged transaction](docs/screens/customer-site-flagged.svg)
+
+---
+
 ## Rules overlay (Week 4)
 Rules live at:
 - `rules/category_overrides.json`
