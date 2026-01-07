@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import os
 import re
 from typing import Any, Dict, List, Mapping
@@ -115,3 +117,41 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
     request.session[CUSTOMER_FLAGS_SESSION_KEY] = flags
     request.session.modified = True
     return redirect("customer:home")
+
+
+def export_flags(request: HttpRequest) -> HttpResponse:
+    flags = _get_customer_flags(request.session)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(
+        [
+            "row_id",
+            "timestamp",
+            "customer_id",
+            "amount",
+            "merchant",
+            "description",
+            "reason",
+            "flagged_at",
+        ]
+    )
+
+    for row_id in sorted(flags.keys()):
+        payload = flags.get(row_id) or {}
+        writer.writerow(
+            [
+                payload.get("row_id", row_id),
+                payload.get("timestamp", ""),
+                payload.get("customer_id", ""),
+                payload.get("amount", ""),
+                payload.get("merchant", ""),
+                payload.get("description", ""),
+                payload.get("reason", ""),
+                payload.get("flagged_at", ""),
+            ]
+        )
+
+    resp = HttpResponse(buf.getvalue(), content_type="text/csv")
+    resp["Content-Disposition"] = "attachment; filename=customer_flags.csv"
+    return resp

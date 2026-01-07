@@ -113,3 +113,55 @@ def test_customer_flag_persists_and_renders_badge(monkeypatch, client, django_us
     customer_resp = client.get("/customer/")
     assert customer_resp.status_code == 200
     assert b"Flagged" in customer_resp.content
+
+
+def test_customer_flags_export_csv(monkeypatch, client, django_user_model) -> None:
+    user = django_user_model.objects.create_user(
+        username="ops", password="pass1234", is_staff=True
+    )
+    client.force_login(user)
+
+    def fake_score_df(df, threshold):
+        df = df.copy()
+        df["category"] = "Fuel"
+        df["fraud_risk"] = 0.15
+        df["flagged"] = False
+        diags = {
+            "pct_flagged": 0.0,
+            "pct_auto_categorised": 1.0,
+            "threshold": threshold,
+            "n": len(df),
+        }
+        return df, diags
+
+    import dashboard.services as services
+
+    monkeypatch.setattr(services, "score_df", fake_score_df)
+
+    csv_bytes = (
+        "timestamp,amount,customer_id,merchant,description\n"
+        "2024-02-02T00:00:00Z,75.00,c5,CityFuel,Petrol\n"
+    ).encode("utf-8")
+
+    upload = SimpleUploadedFile("tx.csv", csv_bytes, content_type="text/csv")
+    resp = client.post("/ops/", data={"threshold": 0.65, "csv_file": upload})
+    assert resp.status_code == 200
+
+    scored_run = load_scored_run(client.session)
+    assert scored_run is not None
+    row_id = scored_run.rows[0]["row_id"]
+
+    flag_resp = client.post(
+        "/customer/flag/",
+        data={"row_id": row_id, "reason": "Card not present"},
+    )
+    assert flag_resp.status_code == 302
+
+    export_resp = client.get("/customer/export-flags/")
+    assert export_resp.status_code == 200
+    assert (
+        b"row_id,timestamp,customer_id,amount,merchant,description,reason,flagged_at"
+        in export_resp.content
+    )
+    assert row_id.encode("utf-8") in export_resp.content
+    assert b"Card not present" in export_resp.content
