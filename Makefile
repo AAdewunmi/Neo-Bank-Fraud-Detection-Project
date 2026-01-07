@@ -18,6 +18,9 @@ score_paysim:
 test:
 	. .venv/bin/activate && coverage run -m pytest -q && coverage report
 
+test-env:
+	. .venv/bin/activate && set -a && . .env && set +a && coverage run -m pytest -q && coverage report
+
 serve:
 	. .venv/bin/activate && python manage.py migrate && python manage.py runserver
 Path: README.md (replace 

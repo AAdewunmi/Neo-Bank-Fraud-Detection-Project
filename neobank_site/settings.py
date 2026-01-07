@@ -8,14 +8,12 @@ Week 2 intent:
 - Auth pages at /accounts/ (login/logout)
 
 Database intent:
-- Dev runs on Postgres (Docker or local Postgres).
-- CI runs on SQLite to keep GitHub Actions lightweight.
-- Local commands without Postgres env vars fall back to SQLite, so pytest can
-  run easily.
+- Dev and CI run on Postgres.
+- DATABASE_URL is the preferred config for all environments.
 
 Important:
 - Users live in the active database.
-- Use Postgres for your real dev login user, SQLite is for CI and test runs.
+- Use Postgres for dev, CI, and production.
 """
 
 from __future__ import annotations
@@ -88,8 +86,6 @@ def _database_from_url(database_url: str) -> Dict[str, Any]:
     Supports:
     - postgres://user:pass@host:port/dbname
     - postgresql://user:pass@host:port/dbname
-    - sqlite:///absolute/path/to/db.sqlite3
-    - sqlite:///:memory:
     """
     parsed = urlparse(database_url)
 
@@ -104,45 +100,18 @@ def _database_from_url(database_url: str) -> Dict[str, Any]:
             "PORT": str(parsed.port or ""),
         }
 
-    if scheme == "sqlite":
-        # sqlite:////absolute/path.db or sqlite:///:memory:
-        path = (parsed.netloc + parsed.path).strip()
-        if path in {":memory:", "/:memory:"}:
-            name = ":memory:"
-        else:
-            # urlparse gives leading slash for absolute paths.
-            name = path
-        return {"ENGINE": "django.db.backends.sqlite3", "NAME": name}
-
     raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed.scheme}")
-
-
-def _default_sqlite() -> Dict[str, Any]:
-    """Local-friendly SQLite default."""
-    return {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
 
 
 # CHANGE: clean switching logic
 # Priority order:
-# 1) DATABASE_URL (Docker dev uses this)
-# 2) CI or GitHub Actions ->
-# SQLite (keeps CI light)
-# 3) Postgres env vars present -> Postgres (local dev)
-# 4) Fallback -> SQLite (makes local pytest easy)
+# 1) DATABASE_URL
+# 2) Postgres env vars (local or Docker)
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-IS_CI = (
-    os.environ.get("CI", "").lower() == "true"
-    or os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
-)
 
 if DATABASE_URL:
     DATABASES = {"default": _database_from_url(DATABASE_URL)}
-elif IS_CI:
-    DATABASES = {"default": _default_sqlite()}
-elif os.environ.get("POSTGRES_HOST"):
+elif os.environ.get("POSTGRES_HOST") or os.environ.get("POSTGRES_DB"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -154,7 +123,16 @@ elif os.environ.get("POSTGRES_HOST"):
         }
     }
 else:
-    DATABASES = {"default": _default_sqlite()}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "neobank",
+            "USER": "neobank",
+            "PASSWORD": "neobank",
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [

@@ -56,6 +56,8 @@ from dashboard.session_store import (
     load_scored_run,
     save_scored_run,
 )
+from customer_site.services import persist_scored_transactions
+from customer_site.models import CustomerTransaction
 from ml.training.utils import load_registry
 
 logger = logging.getLogger(__name__)
@@ -273,6 +275,12 @@ def index(request: HttpRequest) -> HttpResponse:
                 r.setdefault("category_source", "model")
                 r.setdefault("predicted_category", r.get("category"))
 
+            scored_at = timezone.now()
+            persist_scored_transactions(
+                scored_df.to_dict(orient="records"),
+                scored_at=scored_at,
+            )
+
             scored_run = build_scored_run(
                 preview_records,
                 threshold=diags_payload["threshold"],
@@ -282,7 +290,7 @@ def index(request: HttpRequest) -> HttpResponse:
                 total_tx_count=total_tx_count,
                 flagged_count_total=flagged_count_total,
                 rows_truncated=rows_truncated,
-                scored_at=timezone.now().isoformat(),
+                scored_at=scored_at.isoformat(),
             )
 
             save_scored_run(request.session, scored_run)
@@ -398,6 +406,11 @@ def apply_edit(request: HttpRequest) -> HttpResponse:
     request.session[CATEGORY_EDITS_SESSION_KEY] = edits
     request.session.modified = True
 
+    CustomerTransaction.objects.filter(row_id=row_id).update(
+        category=new_category,
+        category_source="edit",
+    )
+
     return redirect("dashboard:index")
 
 
@@ -408,7 +421,8 @@ def export_feedback(request: HttpRequest) -> HttpResponse:
     Export analyst edits as feedback_edits.csv.
 
     CSV columns:
-        row_id,timestamp,customer_id,amount,merchant,description,predicted_category,new_category,edited_at
+        row_id,timestamp,customer_id,amount,merchant,description,
+        predicted_category,new_category,edited_at
 
     Notes:
         - Deterministic ordering by row_id to make diffs stable.

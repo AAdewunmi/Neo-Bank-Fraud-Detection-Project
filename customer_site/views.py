@@ -17,8 +17,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from dashboard.session_store import load_scored_run
-from dashboard.views import _ensure_row_ids, _get_category_edits, _overlay_category_edits
+from dashboard.views import _get_category_edits, _overlay_category_edits
+from customer_site.models import CustomerTransaction
 from customer_site.services import build_spend_summary
 
 SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "category")
@@ -46,13 +46,39 @@ def _build_customer_rows(
     edits: Dict[str, Dict[str, Any]],
     max_rows: int,
 ) -> List[Dict[str, Any]]:
-    rows_with_ids = _ensure_row_ids(list(rows))
-    display_rows = _overlay_category_edits(rows_with_ids, edits)
+    display_rows = _overlay_category_edits(list(rows), edits)
 
     safe_rows: List[Dict[str, Any]] = []
     for row in display_rows[:max_rows]:
         safe_rows.append({field: row.get(field, "") for field in SAFE_FIELDS})
     return safe_rows
+
+
+def _load_latest_transactions(user, max_rows: int) -> tuple[List[Dict[str, Any]], int]:
+    if user.is_staff:
+        base_qs = CustomerTransaction.objects.all()
+    else:
+        base_qs = CustomerTransaction.objects.filter(customer_id=user.username)
+
+    latest_scored_at = (
+        base_qs.order_by("-scored_at").values_list("scored_at", flat=True).first()
+    )
+    if not latest_scored_at:
+        return [], 0
+
+    scoped = base_qs.filter(scored_at=latest_scored_at)
+    total_count = scoped.count()
+    rows = list(
+        scoped.order_by("-timestamp").values(
+            "row_id",
+            "timestamp",
+            "merchant",
+            "description",
+            "amount",
+            "category",
+        )[:max_rows]
+    )
+    return rows, total_count
 
 
 def _filter_customer_rows(rows: List[Mapping[str, Any]]) -> tuple[List[Dict[str, Any]], int]:
@@ -106,11 +132,11 @@ def customer_logout(request: HttpRequest) -> HttpResponse:
 @login_required(login_url="customer:login")
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Render the customer dashboard."""
-    scored_run = load_scored_run(request.session)
-    base_rows = scored_run.rows if scored_run else []
-    run_meta = scored_run.run_meta if scored_run else {}
     flags = _get_customer_flags(request.session)
 
+    max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
+    edits = _get_category_edits(request.session)
+    base_rows, total_count = _load_latest_transactions(request.user, max_rows)
     if not base_rows:
         context = {
             "rows": [],
@@ -118,16 +144,14 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "total_count": 0,
             "rows_shown": 0,
             "flags": flags,
+            "warning_message": None,
         }
         return render(request, "customer/dashboard.html", context)
 
-    max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
-    edits = _get_category_edits(request.session)
     safe_rows = _build_customer_rows(base_rows, edits, max_rows)
     safe_rows, dropped_rows = _filter_customer_rows(safe_rows)
     summary = build_spend_summary(safe_rows, max_categories=6)
 
-    total_count = int(run_meta.get("tx_count") or len(base_rows))
     context = {
         "rows": safe_rows,
         "has_rows": bool(safe_rows),
@@ -155,20 +179,34 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
     if len(reason) > MAX_REASON_LENGTH:
         reason = reason[:MAX_REASON_LENGTH]
 
-    scored_run = load_scored_run(request.session)
-    if not scored_run or not scored_run.rows:
-        return redirect("customer:dashboard")
-
-    rows_with_ids = _ensure_row_ids(list(scored_run.rows))
-    row_lookup = {str(r.get("row_id", "")).lower(): r for r in rows_with_ids}
-    base = row_lookup.get(row_id)
+    if request.user.is_staff:
+        base = CustomerTransaction.objects.filter(row_id=row_id).values(
+            "row_id",
+            "timestamp",
+            "customer_id",
+            "amount",
+            "merchant",
+            "description",
+        ).first()
+    else:
+        base = CustomerTransaction.objects.filter(
+            row_id=row_id,
+            customer_id=request.user.username,
+        ).values(
+            "row_id",
+            "timestamp",
+            "customer_id",
+            "amount",
+            "merchant",
+            "description",
+        ).first()
     if base is None:
         return redirect("customer:dashboard")
 
     flags = _get_customer_flags(request.session)
     # Overwrite allowed so the latest customer note is captured.
     flags[row_id] = {
-        "row_id": row_id,
+        "row_id": str(base.get("row_id", row_id)),
         "timestamp": str(base.get("timestamp", "")),
         "customer_id": str(base.get("customer_id", "")),
         "amount": str(base.get("amount", "")),

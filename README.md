@@ -178,6 +178,7 @@ This project uses environment variables for configuration.
 
 - Copy `.env.example` to `.env`
 - Edit values as needed
+- Ensure Postgres is running and `DATABASE_URL` points at it (required for dev and tests)
 
 One reliable way to load `.env` into the current shell session:
 - `set -a; source .env; set +a`

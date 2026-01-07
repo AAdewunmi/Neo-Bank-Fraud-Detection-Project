@@ -23,7 +23,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      # CHANGED: Force Postgres inside Docker, regardless of CI/SQLite defaults
+      # CHANGED: Force Postgres inside Docker
       DJANGO_DB: "postgres"
       RUNNING_IN_DOCKER: "1"
 

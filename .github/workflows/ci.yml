@@ -18,8 +18,23 @@ jobs:
     name: unit (fast)
     runs-on: ubuntu-latest
     env:
-      DJANGO_SETTINGS_MODULE: neobank_site.settings
+      DJANGO_SETTINGS_MODULE: neobank_site.settings_test
       PYTHONPATH: .
+      DATABASE_URL: postgresql://neobank:neobank@localhost:5432/neobank
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: neobank
+          POSTGRES_USER: neobank
+          POSTGRES_PASSWORD: neobank
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neobank"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4

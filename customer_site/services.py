@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
 
 def _parse_amount(value: Any) -> Optional[Decimal]:
@@ -80,3 +80,52 @@ def build_spend_summary(
         "total_all": _format_money(total_all),
         "has_data": bool(categories),
     }
+
+
+def persist_scored_transactions(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    scored_at: datetime,
+) -> None:
+    from dashboard.utils import compute_row_id
+    from customer_site.models import CustomerTransaction
+
+    records = []
+    for row in rows:
+        row_id = str(row.get("row_id") or compute_row_id(row))
+        records.append(
+            CustomerTransaction(
+                row_id=row_id,
+                customer_id=str(row.get("customer_id", "")),
+                timestamp=str(row.get("timestamp", "")),
+                amount=str(row.get("amount", "")),
+                merchant=str(row.get("merchant", "")),
+                description=str(row.get("description", "")),
+                category=str(row.get("category", "")),
+                predicted_category=str(
+                    row.get("predicted_category", row.get("category", ""))
+                ),
+                category_source=str(row.get("category_source", "model")),
+                scored_at=scored_at,
+            )
+        )
+
+    if not records:
+        return
+
+    CustomerTransaction.objects.bulk_create(
+        records,
+        update_conflicts=True,
+        unique_fields=["row_id"],
+        update_fields=[
+            "customer_id",
+            "timestamp",
+            "amount",
+            "merchant",
+            "description",
+            "category",
+            "predicted_category",
+            "category_source",
+            "scored_at",
+        ],
+    )

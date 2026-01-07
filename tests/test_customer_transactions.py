@@ -4,8 +4,6 @@ from __future__ import annotations
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from dashboard.session_store import load_scored_run
-
 pytestmark = pytest.mark.django_db
 
 
@@ -19,10 +17,13 @@ def test_customer_site_empty_state(client, django_user_model) -> None:
 
 
 def test_customer_site_renders_safe_rows_and_edits(monkeypatch, client, django_user_model) -> None:
-    user = django_user_model.objects.create_user(
+    ops_user = django_user_model.objects.create_user(
         username="ops", password="pass1234", is_staff=True
     )
-    client.force_login(user)
+    customer_user = django_user_model.objects.create_user(
+        username="c1", password="pass1234", is_staff=False
+    )
+    client.force_login(ops_user)
 
     def fake_score_df(df, threshold):
         df = df.copy()
@@ -50,20 +51,25 @@ def test_customer_site_renders_safe_rows_and_edits(monkeypatch, client, django_u
     resp = client.post("/ops/", data={"threshold": 0.65, "csv_file": upload})
     assert resp.status_code == 200
 
+    from customer_site.models import CustomerTransaction
+
+    row_id = CustomerTransaction.objects.values_list("row_id", flat=True).first()
+    assert row_id is not None
+
+    edit_resp = client.post(
+        "/ops/edit/",
+        data={"row_id": row_id, "new_category": "Food"},
+    )
+    assert edit_resp.status_code == 302
+
+    client.force_login(customer_user)
     customer_resp = client.get("/customer/")
     assert customer_resp.status_code == 200
     assert b"QuickDrop" in customer_resp.content
     assert b"Order 412" in customer_resp.content
-    assert b"Travel" in customer_resp.content
+    assert b"Food" in customer_resp.content
     assert b"fraud_risk" not in customer_resp.content
     assert b"0.91" not in customer_resp.content
-
-    scored_run = load_scored_run(client.session)
-    assert scored_run is not None
-    row_id = scored_run.rows[0]["row_id"]
-
-    edit_resp = client.post("/ops/edit/", data={"row_id": row_id, "new_category": "Food"})
-    assert edit_resp.status_code == 302
 
     edited_resp = client.get("/customer/")
     assert edited_resp.status_code == 200
@@ -71,10 +77,13 @@ def test_customer_site_renders_safe_rows_and_edits(monkeypatch, client, django_u
 
 
 def test_customer_flag_persists_and_renders_badge(monkeypatch, client, django_user_model) -> None:
-    user = django_user_model.objects.create_user(
+    ops_user = django_user_model.objects.create_user(
         username="ops", password="pass1234", is_staff=True
     )
-    client.force_login(user)
+    customer_user = django_user_model.objects.create_user(
+        username="c9", password="pass1234", is_staff=False
+    )
+    client.force_login(ops_user)
 
     def fake_score_df(df, threshold):
         df = df.copy()
@@ -102,10 +111,12 @@ def test_customer_flag_persists_and_renders_badge(monkeypatch, client, django_us
     resp = client.post("/ops/", data={"threshold": 0.65, "csv_file": upload})
     assert resp.status_code == 200
 
-    scored_run = load_scored_run(client.session)
-    assert scored_run is not None
-    row_id = scored_run.rows[0]["row_id"]
+    from customer_site.models import CustomerTransaction
 
+    row_id = CustomerTransaction.objects.values_list("row_id", flat=True).first()
+    assert row_id is not None
+
+    client.force_login(customer_user)
     flag_resp = client.post("/customer/flag/", data={"row_id": row_id, "reason": "Not mine"})
     assert flag_resp.status_code == 302
 
@@ -120,10 +131,13 @@ def test_customer_flag_persists_and_renders_badge(monkeypatch, client, django_us
 
 
 def test_customer_flags_export_csv(monkeypatch, client, django_user_model) -> None:
-    user = django_user_model.objects.create_user(
+    ops_user = django_user_model.objects.create_user(
         username="ops", password="pass1234", is_staff=True
     )
-    client.force_login(user)
+    customer_user = django_user_model.objects.create_user(
+        username="c5", password="pass1234", is_staff=False
+    )
+    client.force_login(ops_user)
 
     def fake_score_df(df, threshold):
         df = df.copy()
@@ -151,10 +165,12 @@ def test_customer_flags_export_csv(monkeypatch, client, django_user_model) -> No
     resp = client.post("/ops/", data={"threshold": 0.65, "csv_file": upload})
     assert resp.status_code == 200
 
-    scored_run = load_scored_run(client.session)
-    assert scored_run is not None
-    row_id = scored_run.rows[0]["row_id"]
+    from customer_site.models import CustomerTransaction
 
+    row_id = CustomerTransaction.objects.values_list("row_id", flat=True).first()
+    assert row_id is not None
+
+    client.force_login(customer_user)
     flag_resp = client.post(
         "/customer/flag/",
         data={"row_id": row_id, "reason": "Card not present"},
