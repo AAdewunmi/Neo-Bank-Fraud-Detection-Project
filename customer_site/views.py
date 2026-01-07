@@ -10,6 +10,7 @@ from django.shortcuts import render
 
 from dashboard.session_store import load_scored_run
 from dashboard.views import _ensure_row_ids, _get_category_edits, _overlay_category_edits
+from customer_site.services import build_spend_summary
 
 SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "category")
 
@@ -41,6 +42,7 @@ def home(request: HttpRequest) -> HttpResponse:
     max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
     edits = _get_category_edits(request.session)
     safe_rows = _build_customer_rows(base_rows, edits, max_rows)
+    summary = build_spend_summary(safe_rows, max_categories=6)
 
     total_count = int(run_meta.get("tx_count") or len(base_rows))
     context = {
@@ -48,5 +50,6 @@ def home(request: HttpRequest) -> HttpResponse:
         "has_rows": bool(safe_rows),
         "total_count": total_count,
         "rows_shown": len(safe_rows),
+        "summary": summary,
     }
     return render(request, "customer/home.html", context)

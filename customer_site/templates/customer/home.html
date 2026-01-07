@@ -40,6 +40,30 @@
           {% endif %}
         </div>
         {% if has_rows %}
+          {% if summary.has_data %}
+            <div class="border rounded-4 bg-white p-3 mb-3">
+              <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                  <div class="text-muted small">Month-to-date spend</div>
+                  <div class="h4 mb-1">${{ summary.mtd_total }}</div>
+                  <div class="text-muted small">Across visible transactions</div>
+                </div>
+                <div class="col-md-8">
+                  <div class="text-muted small mb-2">Top categories</div>
+                  <div class="row g-2">
+                    {% for item in summary.categories %}
+                      <div class="col-sm-6">
+                        <div class="d-flex justify-content-between">
+                          <span class="small">{{ item.name }}</span>
+                          <span class="small text-muted">${{ item.total }}</span>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-3">
               <thead>
