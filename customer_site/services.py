@@ -93,6 +93,8 @@ def persist_scored_transactions(
     records = []
     for row in rows:
         row_id = str(row.get("row_id") or compute_row_id(row))
+        flagged = bool(row.get("flagged") or row.get("fraud_flag"))
+        fraud_risk = row.get("fraud_risk")
         records.append(
             CustomerTransaction(
                 row_id=row_id,
@@ -106,6 +108,8 @@ def persist_scored_transactions(
                     row.get("predicted_category", row.get("category", ""))
                 ),
                 category_source=str(row.get("category_source", "model")),
+                fraud_risk=float(fraud_risk) if fraud_risk is not None else None,
+                flagged=flagged,
                 scored_at=scored_at,
             )
         )
@@ -126,6 +130,8 @@ def persist_scored_transactions(
             "category",
             "predicted_category",
             "category_source",
+            "fraud_risk",
+            "flagged",
             "scored_at",
         ],
     )

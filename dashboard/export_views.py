@@ -1,21 +1,20 @@
 """
 Export views for Ops dashboard.
 
-Exports are session-backed:
+Exports are DB-backed:
 - no re-scoring on export
-- export is consistent with what the user last scored
+- export reflects the latest persisted scoring run
 """
 from __future__ import annotations
 
 import csv
 from datetime import datetime, timezone
 from io import StringIO
-from typing import Dict, List
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 
-from .session_store import load_scored_rows
+from customer_site.models import CustomerTransaction
 
 
 def _filename_ts() -> str:
@@ -44,28 +43,47 @@ def export_flagged_csv(request: HttpRequest) -> HttpResponse:
     Returns:
         CSV download response.
     """
-    rows = load_scored_rows(request.session)
-    if not rows:
+    latest_scored_at = (
+        CustomerTransaction.objects.order_by("-scored_at")
+        .values_list("scored_at", flat=True)
+        .first()
+    )
+    if not latest_scored_at:
         return HttpResponse(
             "No export data found. Upload and score a CSV first.",
             status=400,
             content_type="text/plain; charset=utf-8",
         )
 
-    flagged: List[Dict] = [r for r in rows if bool(r.get("flagged")) is True]
-    fieldnames = list(rows[0].keys()) if rows else []
-    if not flagged:
+    flagged_qs = CustomerTransaction.objects.filter(
+        scored_at=latest_scored_at,
+        flagged=True,
+    ).order_by("row_id")
+    if not flagged_qs.exists():
         return HttpResponse(
             "No flagged rows available for export.",
             status=400,
             content_type="text/plain; charset=utf-8",
         )
 
+    fieldnames = [
+        "row_id",
+        "timestamp",
+        "customer_id",
+        "amount",
+        "merchant",
+        "description",
+        "category",
+        "predicted_category",
+        "category_source",
+        "fraud_risk",
+        "flagged",
+    ]
     buf = StringIO()
     writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
     writer.writeheader()
-    for r in flagged:
-        writer.writerow({k: r.get(k, "") for k in fieldnames})
+    for row in flagged_qs.values(*fieldnames):
+        writer.writerow({k: row.get(k, "") for k in fieldnames})
 
     csv_text = buf.getvalue()
     buf.close()
@@ -92,20 +110,39 @@ def export_all_csv(request: HttpRequest) -> HttpResponse:
     Returns:
         CSV download response.
     """
-    rows = load_scored_rows(request.session)
-    if not rows:
+    latest_scored_at = (
+        CustomerTransaction.objects.order_by("-scored_at")
+        .values_list("scored_at", flat=True)
+        .first()
+    )
+    if not latest_scored_at:
         return HttpResponse(
             "No export data found. Upload and score a CSV first.",
             status=400,
             content_type="text/plain; charset=utf-8",
         )
 
-    fieldnames = list(rows[0].keys())
+    fieldnames = [
+        "row_id",
+        "timestamp",
+        "customer_id",
+        "amount",
+        "merchant",
+        "description",
+        "category",
+        "predicted_category",
+        "category_source",
+        "fraud_risk",
+        "flagged",
+    ]
     buf = StringIO()
     writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
     writer.writeheader()
-    for r in rows:
-        writer.writerow({k: r.get(k, "") for k in fieldnames})
+    all_rows = CustomerTransaction.objects.filter(
+        scored_at=latest_scored_at
+    ).order_by("row_id")
+    for row in all_rows.values(*fieldnames):
+        writer.writerow({k: row.get(k, "") for k in fieldnames})
 
     csv_text = buf.getvalue()
     buf.close()

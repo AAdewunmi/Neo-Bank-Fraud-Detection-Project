@@ -18,11 +18,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from dashboard.views import _get_category_edits, _overlay_category_edits
-from customer_site.models import CustomerTransaction
+from customer_site.models import CustomerFlag, CustomerTransaction
 from customer_site.services import build_spend_summary
 
 SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "category")
-CUSTOMER_FLAGS_SESSION_KEY = "customer_flags"
 MAX_REASON_LENGTH = 200
 ROW_ID_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 SAFE_FIELDS_SET = set(SAFE_FIELDS)
@@ -30,11 +29,12 @@ SAFE_FIELDS_SET = set(SAFE_FIELDS)
 logger = logging.getLogger(__name__)
 
 
-def _get_customer_flags(session: Any) -> Dict[str, Dict[str, Any]]:
-    raw = session.get(CUSTOMER_FLAGS_SESSION_KEY, {})
-    if isinstance(raw, dict):
-        return raw
-    return {}
+def _get_customer_flags(user) -> Dict[str, Dict[str, Any]]:
+    if user.is_staff:
+        flags = CustomerFlag.objects.all()
+    else:
+        flags = CustomerFlag.objects.filter(customer_id=user.username)
+    return {f.row_id: {"row_id": f.row_id, "reason": f.reason} for f in flags}
 
 
 def _is_valid_row_id(row_id: str) -> bool:
@@ -132,7 +132,7 @@ def customer_logout(request: HttpRequest) -> HttpResponse:
 @login_required(login_url="customer:login")
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Render the customer dashboard."""
-    flags = _get_customer_flags(request.session)
+    flags = _get_customer_flags(request.user)
 
     max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
     edits = _get_category_edits(request.session)
@@ -203,26 +203,29 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
     if base is None:
         return redirect("customer:dashboard")
 
-    flags = _get_customer_flags(request.session)
-    # Overwrite allowed so the latest customer note is captured.
-    flags[row_id] = {
-        "row_id": str(base.get("row_id", row_id)),
-        "timestamp": str(base.get("timestamp", "")),
-        "customer_id": str(base.get("customer_id", "")),
-        "amount": str(base.get("amount", "")),
-        "merchant": str(base.get("merchant", "")),
-        "description": str(base.get("description", "")),
-        "reason": reason,
-        "flagged_at": timezone.now().isoformat(),
-    }
-    request.session[CUSTOMER_FLAGS_SESSION_KEY] = flags
-    request.session.modified = True
+    CustomerFlag.objects.update_or_create(
+        row_id=row_id,
+        defaults={
+            "timestamp": str(base.get("timestamp", "")),
+            "customer_id": str(base.get("customer_id", "")),
+            "amount": str(base.get("amount", "")),
+            "merchant": str(base.get("merchant", "")),
+            "description": str(base.get("description", "")),
+            "reason": reason,
+            "flagged_at": timezone.now(),
+        },
+    )
     return redirect("customer:dashboard")
 
 
 @login_required(login_url="customer:login")
 def export_flags(request: HttpRequest) -> HttpResponse:
-    flags = _get_customer_flags(request.session)
+    if request.user.is_staff:
+        flags = CustomerFlag.objects.all().order_by("row_id")
+    else:
+        flags = CustomerFlag.objects.filter(
+            customer_id=request.user.username
+        ).order_by("row_id")
 
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -239,18 +242,17 @@ def export_flags(request: HttpRequest) -> HttpResponse:
         ]
     )
 
-    for row_id in sorted(flags.keys()):
-        payload = flags.get(row_id) or {}
+    for flag in flags:
         writer.writerow(
             [
-                payload.get("row_id", row_id),
-                payload.get("timestamp", ""),
-                payload.get("customer_id", ""),
-                payload.get("amount", ""),
-                payload.get("merchant", ""),
-                payload.get("description", ""),
-                payload.get("reason", ""),
-                payload.get("flagged_at", ""),
+                flag.row_id,
+                flag.timestamp,
+                flag.customer_id,
+                flag.amount,
+                flag.merchant,
+                flag.description,
+                flag.reason,
+                flag.flagged_at.isoformat(),
             ]
         )
 

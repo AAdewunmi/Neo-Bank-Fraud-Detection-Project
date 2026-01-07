@@ -36,12 +36,7 @@ def test_export_all_csv_success(monkeypatch, client, django_user_model):
     )
     client.post("/ops/", data={"threshold": 0.7, "csv_file": upload})
 
-    # Manually store session-backed run (mimic dashboard/session_store.py behaviour)
-    session = client.session
-    session["scored_run"] = {"rows": df.to_dict(orient="records"), "diags": diags}
-    session.save()
-
-    # Export should now succeed
+    # Export should now succeed (DB-backed)
     resp = client.get("/ops/export/all/")
     assert resp.status_code == 200
     assert resp["Content-Type"].startswith("text/csv")

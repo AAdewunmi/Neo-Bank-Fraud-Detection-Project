@@ -58,6 +58,7 @@ from dashboard.session_store import (
 )
 from customer_site.services import persist_scored_transactions
 from customer_site.models import CustomerTransaction
+from dashboard.models import OpsCategoryEdit
 from ml.training.utils import load_registry
 
 logger = logging.getLogger(__name__)
@@ -397,7 +398,9 @@ def apply_edit(request: HttpRequest) -> HttpResponse:
         "amount": str(base.get("amount", "")),
         "merchant": str(base.get("merchant", "")),
         "description": str(base.get("description", "")),
-        "predicted_category": str(base.get("predicted_category", base.get("category", ""))),
+        "predicted_category": str(
+            base.get("predicted_category", base.get("category", ""))
+        ),
         "new_category": new_category,
         "edited_at": timezone.now().isoformat(),
     }
@@ -405,6 +408,20 @@ def apply_edit(request: HttpRequest) -> HttpResponse:
     edits[row_id] = payload
     request.session[CATEGORY_EDITS_SESSION_KEY] = edits
     request.session.modified = True
+
+    OpsCategoryEdit.objects.update_or_create(
+        row_id=row_id,
+        defaults={
+            "timestamp": payload["timestamp"],
+            "customer_id": payload["customer_id"],
+            "amount": payload["amount"],
+            "merchant": payload["merchant"],
+            "description": payload["description"],
+            "predicted_category": payload["predicted_category"],
+            "new_category": payload["new_category"],
+            "edited_at": payload["edited_at"],
+        },
+    )
 
     CustomerTransaction.objects.filter(row_id=row_id).update(
         category=new_category,
@@ -434,7 +451,13 @@ def export_feedback(request: HttpRequest) -> HttpResponse:
     Returns:
         CSV file download response.
     """
-    edits = _get_category_edits(request.session)
+    edits = list(OpsCategoryEdit.objects.order_by("row_id"))
+    if not edits:
+        return HttpResponse(
+            "No feedback edits available for export.",
+            status=400,
+            content_type="text/plain; charset=utf-8",
+        )
 
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -452,19 +475,18 @@ def export_feedback(request: HttpRequest) -> HttpResponse:
         ]
     )
 
-    for rid in sorted(edits.keys()):
-        e = edits[rid] or {}
+    for edit in edits:
         w.writerow(
             [
-                e.get("row_id", rid),
-                e.get("timestamp", ""),
-                e.get("customer_id", ""),
-                e.get("amount", ""),
-                e.get("merchant", ""),
-                e.get("description", ""),
-                e.get("predicted_category", ""),
-                e.get("new_category", ""),
-                e.get("edited_at", ""),
+                edit.row_id,
+                edit.timestamp,
+                edit.customer_id,
+                edit.amount,
+                edit.merchant,
+                edit.description,
+                edit.predicted_category,
+                edit.new_category,
+                edit.edited_at.isoformat(),
             ]
         )
 

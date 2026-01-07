@@ -21,6 +21,10 @@ test:
 test-env:
 	. .venv/bin/activate && set -a && . .env && set +a && coverage run -m pytest -q && coverage report
 
+test-docker:
+	docker compose up -d db web
+	docker compose exec web pytest -q
+
 serve:
 	. .venv/bin/activate && python manage.py migrate && python manage.py runserver
 Path: README.md (replace 

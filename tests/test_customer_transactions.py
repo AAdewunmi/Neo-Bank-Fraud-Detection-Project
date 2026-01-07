@@ -120,10 +120,9 @@ def test_customer_flag_persists_and_renders_badge(monkeypatch, client, django_us
     flag_resp = client.post("/customer/flag/", data={"row_id": row_id, "reason": "Not mine"})
     assert flag_resp.status_code == 302
 
-    from customer_site.views import CUSTOMER_FLAGS_SESSION_KEY
+    from customer_site.models import CustomerFlag
 
-    session_flags = client.session.get(CUSTOMER_FLAGS_SESSION_KEY, {})
-    assert row_id in session_flags
+    assert CustomerFlag.objects.filter(row_id=row_id).exists()
 
     customer_resp = client.get("/customer/")
     assert customer_resp.status_code == 200
