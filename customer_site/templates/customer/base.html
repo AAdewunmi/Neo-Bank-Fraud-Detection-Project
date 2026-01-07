@@ -80,6 +80,7 @@
           {% endif %}
           <div class="d-flex gap-2">
             {% if user.is_authenticated %}
+              <span class="text-muted small align-self-center">Signed in as {{ user.username }}</span>
               <form method="post" action="{% url 'customer:logout' %}" class="mb-0">
                 {% csrf_token %}
                 <button class="btn btn-sm btn-outline-secondary" type="submit">Sign out</button>
