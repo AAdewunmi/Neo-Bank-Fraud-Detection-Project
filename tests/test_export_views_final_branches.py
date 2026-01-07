@@ -25,8 +25,11 @@ def test_export_all_csv_success(monkeypatch, client, django_user_model):
     diags = {"n": 1, "pct_flagged": 1.0, "threshold": 0.7}
 
     # Stub scoring functions
+    def fake_score_df(df, threshold):
+        return df, diags
+
     monkeypatch.setattr(services, "read_csv", lambda f: df)
-    monkeypatch.setattr(services, "score_df", lambda d, t: (df, diags))
+    monkeypatch.setattr(services, "score_df", fake_score_df)
 
     # Simulate upload + scoring to trigger session creation
     upload = SimpleUploadedFile(

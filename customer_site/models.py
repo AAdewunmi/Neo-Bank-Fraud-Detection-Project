@@ -21,7 +21,7 @@ class CustomerTransaction(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["customer_id", "scored_at"]),
+            models.Index(fields=["customer_id", "scored_at"], name="customer_scored_idx"),
         ]
 
     def __str__(self) -> str:
@@ -40,7 +40,7 @@ class CustomerFlag(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["customer_id", "flagged_at"]),
+            models.Index(fields=["customer_id", "flagged_at"], name="customer_flag_idx"),
         ]
 
     def __str__(self) -> str:

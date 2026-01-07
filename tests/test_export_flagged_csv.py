@@ -69,8 +69,11 @@ def test_export_contains_only_flagged_rows(monkeypatch, client, django_user_mode
     user = django_user_model.objects.create_user(username="ops", password="pass1234", is_staff=True)
     client.force_login(user)
 
+    def fake_score_df(df, threshold):
+        return _fake_scoring()
+
     monkeypatch.setattr("dashboard.views.services.read_csv", lambda f: pd.DataFrame([{"x": 1}]))
-    monkeypatch.setattr("dashboard.views.services.score_df", lambda df, threshold: _fake_scoring())
+    monkeypatch.setattr("dashboard.views.services.score_df", fake_score_df)
 
     upload = SimpleUploadedFile(
         "sample.csv",

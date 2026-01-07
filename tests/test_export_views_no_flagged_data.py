@@ -29,8 +29,11 @@ def test_export_flagged_csv_no_flagged_rows(monkeypatch, client, django_user_mod
     )
     diags = {"n": 1, "pct_flagged": 0.0, "threshold": 0.7}
 
+    def fake_score_df(df, threshold):
+        return df, diags
+
     monkeypatch.setattr(services, "read_csv", lambda f: df)
-    monkeypatch.setattr(services, "score_df", lambda d, t: (df, diags))
+    monkeypatch.setattr(services, "score_df", fake_score_df)
 
     upload = SimpleUploadedFile(
         "tx.csv",
@@ -38,10 +41,6 @@ def test_export_flagged_csv_no_flagged_rows(monkeypatch, client, django_user_mod
         content_type="text/csv",
     )
     client.post("/ops/", data={"threshold": 0.7, "csv_file": upload})
-
-    session = client.session
-    session["dashboard_scored_rows"] = df.to_dict(orient="records")
-    session.save()
 
     resp = client.get("/ops/export/flagged/")
     assert resp.status_code == 400
