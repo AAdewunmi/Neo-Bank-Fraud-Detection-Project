@@ -1,0 +1,156 @@
+{% extends "customer/base.html" %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+          <div class="col-lg-8">
+            <h1 class="display-6 fw-semibold mb-2">Your activity at a glance</h1>
+            <p class="text-muted mb-0">
+              Clear, plain-language insights into your recent activity and risk status.
+              Details are limited to protect your privacy.
+            </p>
+          </div>
+          <div class="col-lg-4">
+            <div class="soft-panel rounded-4 p-3">
+              <div class="fw-semibold mb-1">Fraud status</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="badge text-bg-warning">Reviewing</span>
+                <span class="text-muted small">No action required</span>
+              </div>
+              <div class="text-muted small mt-2">
+                We will contact you if we need more information.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="fw-semibold">Recent transactions</div>
+          <button class="btn btn-sm btn-outline-secondary" type="button">Download statement CSV</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-3">
+            <thead>
+              <tr class="text-muted small">
+                <th scope="col">Date</th>
+                <th scope="col">Merchant</th>
+                <th scope="col">Category</th>
+                <th scope="col" class="text-end">Amount</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-muted small">Jan 7</td>
+                <td>QuickDrop</td>
+                <td class="text-muted small">Delivery</td>
+                <td class="text-end">$62.40</td>
+                <td><span class="badge text-bg-light">Complete</span></td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Jan 6</td>
+                <td>CityFuel</td>
+                <td class="text-muted small">Transport</td>
+                <td class="text-end">$41.10</td>
+                <td><span class="badge text-bg-light">Complete</span></td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Jan 6</td>
+                <td>SoundWave</td>
+                <td class="text-muted small">Entertainment</td>
+                <td class="text-end">$14.99</td>
+                <td><span class="badge text-bg-light">Complete</span></td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Jan 5</td>
+                <td>MetroMart</td>
+                <td class="text-muted small">Groceries</td>
+                <td class="text-end">$128.00</td>
+                <td><span class="badge text-bg-warning">Reviewing</span></td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Jan 5</td>
+                <td>Sunline</td>
+                <td class="text-muted small">Travel</td>
+                <td class="text-end">$220.50</td>
+                <td><span class="badge text-bg-light">Complete</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Showing 5 of 32 transactions</span>
+          <button class="btn btn-sm btn-outline-primary" type="button">Flag a transaction</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <div class="fw-semibold mb-3">Spend by category (month-to-date)</div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small">Groceries</span>
+            <span class="text-muted small">$412</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar" role="progressbar" style="width: 55%;"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small">Transport</span>
+            <span class="text-muted small">$210</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-info" role="progressbar" style="width: 28%;"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small">Dining</span>
+            <span class="text-muted small">$180</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: 24%;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small">Travel</span>
+            <span class="text-muted small">$146</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-warning" role="progressbar" style="width: 18%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="fw-semibold mb-2">Need to report a transaction?</div>
+        <p class="text-muted small mb-3">
+          Flag a purchase as "not mine" and add a short note. We will review it and
+          update your status if action is needed.
+        </p>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" type="button">Report a transaction</button>
+          <button class="btn btn-outline-secondary" type="button">View status</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

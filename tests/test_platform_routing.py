@@ -11,6 +11,12 @@ def test_customer_home_ok(client) -> None:
     assert resp.status_code == 200
 
 
+def test_customer_site_ok(client) -> None:
+    """Customer site should be reachable without auth."""
+    resp = client.get("/customer/")
+    assert resp.status_code == 200
+
+
 def test_ops_requires_login(client) -> None:
     """Ops area should redirect unauthenticated users to login."""
     resp = client.get("/ops/")

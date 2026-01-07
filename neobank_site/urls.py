@@ -11,6 +11,12 @@ urlpatterns = [
     # Public homepage
     path("", dashboard_views.public_home, name="public_home"),
 
+    # Customer site
+    path(
+        "customer/",
+        include(("customer_site.urls", "customer"), namespace="customer"),
+    ),
+
     # Dashboard (main app)
     path("ops/", dashboard_views.index, name="dashboard"),
     path("ops/", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
