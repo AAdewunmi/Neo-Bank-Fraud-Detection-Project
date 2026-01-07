@@ -3,16 +3,33 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Dict, List, Mapping
 
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from dashboard.session_store import load_scored_run
 from dashboard.views import _ensure_row_ids, _get_category_edits, _overlay_category_edits
 from customer_site.services import build_spend_summary
 
 SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "category")
+CUSTOMER_FLAGS_SESSION_KEY = "customer_flags"
+MAX_REASON_LENGTH = 200
+ROW_ID_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _get_customer_flags(session: Any) -> Dict[str, Dict[str, Any]]:
+    raw = session.get(CUSTOMER_FLAGS_SESSION_KEY, {})
+    if isinstance(raw, dict):
+        return raw
+    return {}
+
+
+def _is_valid_row_id(row_id: str) -> bool:
+    return bool(ROW_ID_PATTERN.match(row_id))
 
 
 def _build_customer_rows(
@@ -34,9 +51,16 @@ def home(request: HttpRequest) -> HttpResponse:
     scored_run = load_scored_run(request.session)
     base_rows = scored_run.rows if scored_run else []
     run_meta = scored_run.run_meta if scored_run else {}
+    flags = _get_customer_flags(request.session)
 
     if not base_rows:
-        context = {"rows": [], "has_rows": False, "total_count": 0, "rows_shown": 0}
+        context = {
+            "rows": [],
+            "has_rows": False,
+            "total_count": 0,
+            "rows_shown": 0,
+            "flags": flags,
+        }
         return render(request, "customer/home.html", context)
 
     max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
@@ -51,5 +75,43 @@ def home(request: HttpRequest) -> HttpResponse:
         "total_count": total_count,
         "rows_shown": len(safe_rows),
         "summary": summary,
+        "flags": flags,
     }
     return render(request, "customer/home.html", context)
+
+
+@require_POST
+def flag_transaction(request: HttpRequest) -> HttpResponse:
+    row_id = str(request.POST.get("row_id", "")).strip().lower()
+    if not _is_valid_row_id(row_id):
+        return redirect("customer:home")
+
+    reason = str(request.POST.get("reason", "")).strip()
+    if len(reason) > MAX_REASON_LENGTH:
+        reason = reason[:MAX_REASON_LENGTH]
+
+    scored_run = load_scored_run(request.session)
+    if not scored_run or not scored_run.rows:
+        return redirect("customer:home")
+
+    rows_with_ids = _ensure_row_ids(list(scored_run.rows))
+    row_lookup = {str(r.get("row_id", "")).lower(): r for r in rows_with_ids}
+    base = row_lookup.get(row_id)
+    if base is None:
+        return redirect("customer:home")
+
+    flags = _get_customer_flags(request.session)
+    # Overwrite allowed so the latest customer note is captured.
+    flags[row_id] = {
+        "row_id": row_id,
+        "timestamp": str(base.get("timestamp", "")),
+        "customer_id": str(base.get("customer_id", "")),
+        "amount": str(base.get("amount", "")),
+        "merchant": str(base.get("merchant", "")),
+        "description": str(base.get("description", "")),
+        "reason": reason,
+        "flagged_at": timezone.now().isoformat(),
+    }
+    request.session[CUSTOMER_FLAGS_SESSION_KEY] = flags
+    request.session.modified = True
+    return redirect("customer:home")

@@ -7,4 +7,5 @@ app_name = "customer"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("flag/", views.flag_transaction, name="flag"),
 ]

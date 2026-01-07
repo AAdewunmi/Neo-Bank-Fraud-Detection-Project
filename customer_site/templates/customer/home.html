@@ -85,7 +85,23 @@
                     <td class="text-muted small">{{ row.category }}</td>
                     <td class="text-end">{{ row.amount }}</td>
                     <td>
-                      <button class="btn btn-sm btn-outline-primary" type="button">Not mine</button>
+                      {% if flags and row.row_id in flags %}
+                        <span class="badge text-bg-warning">Flagged</span>
+                      {% else %}
+                        <form method="post" action="{% url 'customer:flag' %}" class="d-flex gap-2 align-items-center">
+                          {% csrf_token %}
+                          <input type="hidden" name="row_id" value="{{ row.row_id }}">
+                          <input
+                            class="form-control form-control-sm"
+                            type="text"
+                            name="reason"
+                            maxlength="200"
+                            placeholder="Reason (optional)"
+                            aria-label="Reason for reporting transaction"
+                          >
+                          <button class="btn btn-sm btn-outline-primary" type="submit">Not mine</button>
+                        </form>
+                      {% endif %}
                     </td>
                   </tr>
                 {% endfor %}
