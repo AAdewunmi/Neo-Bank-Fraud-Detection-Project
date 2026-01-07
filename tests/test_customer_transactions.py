@@ -53,6 +53,7 @@ def test_customer_site_renders_safe_rows_and_edits(monkeypatch, client, django_u
     assert b"Order 412" in customer_resp.content
     assert b"Travel" in customer_resp.content
     assert b"fraud_risk" not in customer_resp.content
+    assert b"0.91" not in customer_resp.content
 
     scored_run = load_scored_run(client.session)
     assert scored_run is not None

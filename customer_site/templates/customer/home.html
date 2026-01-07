@@ -39,6 +39,9 @@
             <button class="btn btn-sm btn-outline-secondary" type="button">Download statement CSV</button>
           {% endif %}
         </div>
+        {% if warning_message %}
+          <div class="alert alert-warning py-2 mb-3 small">{{ warning_message }}</div>
+        {% endif %}
         {% if has_rows %}
           {% if summary.has_data %}
             <div class="border rounded-4 bg-white p-3 mb-3">

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import os
 import re
 from typing import Any, Dict, List, Mapping
@@ -21,6 +22,9 @@ SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "cate
 CUSTOMER_FLAGS_SESSION_KEY = "customer_flags"
 MAX_REASON_LENGTH = 200
 ROW_ID_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+SAFE_FIELDS_SET = set(SAFE_FIELDS)
+
+logger = logging.getLogger(__name__)
 
 
 def _get_customer_flags(session: Any) -> Dict[str, Dict[str, Any]]:
@@ -48,6 +52,24 @@ def _build_customer_rows(
     return safe_rows
 
 
+def _filter_customer_rows(rows: List[Mapping[str, Any]]) -> tuple[List[Dict[str, Any]], int]:
+    filtered: List[Dict[str, Any]] = []
+    dropped = 0
+    for idx, row in enumerate(rows):
+        unexpected = set(row.keys()) - SAFE_FIELDS_SET
+        if unexpected:
+            unexpected_list = ", ".join(sorted(unexpected))
+            logger.warning(
+                "Dropping customer row %s due to unexpected keys: %s",
+                idx,
+                unexpected_list,
+            )
+            dropped += 1
+            continue
+        filtered.append(dict(row))
+    return filtered, dropped
+
+
 def home(request: HttpRequest) -> HttpResponse:
     """Render the customer landing page."""
     scored_run = load_scored_run(request.session)
@@ -68,6 +90,7 @@ def home(request: HttpRequest) -> HttpResponse:
     max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
     edits = _get_category_edits(request.session)
     safe_rows = _build_customer_rows(base_rows, edits, max_rows)
+    safe_rows, dropped_rows = _filter_customer_rows(safe_rows)
     summary = build_spend_summary(safe_rows, max_categories=6)
 
     total_count = int(run_meta.get("tx_count") or len(base_rows))
@@ -78,6 +101,11 @@ def home(request: HttpRequest) -> HttpResponse:
         "rows_shown": len(safe_rows),
         "summary": summary,
         "flags": flags,
+        "warning_message": (
+            f"{dropped_rows} transactions were hidden to protect your privacy."
+            if dropped_rows
+            else None
+        ),
     }
     return render(request, "customer/home.html", context)
 
