@@ -23,7 +23,7 @@ Status: Work in progress (Week 4). This README reflects the current end-to-end s
 - Fraud risk baseline (Isolation Forest)
 - Unified scorer interface (one entry point that returns category, confidence, fraud risk, and flagged status)
 - CSV ingestion with schema validation and coercion rules
-- Django Ops dashboard to upload a CSV, view KPIs, filter rows, and inspect scored results
+- Django Ops Dashboard to upload a CSV, view KPIs, filter rows, and inspect scored results
 - Feedback loop for analyst category edits, merged in-session and exported as `feedback_edits.csv`
 - Stable row identifiers (`row_id`) so feedback is durable across filtering, ordering, and truncation
 - Rules overlay (substring match) to override categories with audit tagging (`category_source = rule|model|edit`)
@@ -74,7 +74,7 @@ Coercion and rejection rules are documented in `docs/` (policy: reject missing r
 
 ---
 
-## Ops dashboard workflows (Week 4)
+## Ops Dashboard workflows (Week 4)
 
 ### 1) Upload and score
 - Upload a CSV
@@ -87,7 +87,7 @@ If the upload exceeds the preview limit, the UI shows a truncated table while pr
 - a preview that prioritises flagged rows
 
 ### 2) Filter results
-The Ops dashboard supports server-side filtering:
+The Ops Dashboard supports server-side filtering:
 - flagged only
 - customer_id
 - merchant contains

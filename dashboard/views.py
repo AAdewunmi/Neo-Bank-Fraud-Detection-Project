@@ -95,7 +95,7 @@ def ops_login(request: HttpRequest) -> HttpResponse:
             login(request, user)
             return redirect("dashboard:index")
 
-    return render(request, "registration/login.html", {"form": form})
+    return render(request, "registration/login.html", {"form": form, "brand_link": True})
 
 
 @ops_access_required

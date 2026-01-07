@@ -26,23 +26,69 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-light bg-white border-bottom">
-      <div class="container py-2">
-        <a class="navbar-brand d-flex align-items-center" href="/customer/">
-          <span class="brand-dot"></span>
-          <span class="fw-semibold">LedgerGuard</span>
-          <span class="ms-2 small text-muted">Customer dashboard</span>
-        </a>
-        <div class="d-flex gap-2">
-          {% if user.is_authenticated %}
-            <form method="post" action="{% url 'customer:logout' %}" class="mb-0">
-              {% csrf_token %}
-              <button class="btn btn-sm btn-outline-secondary" type="submit">Sign out</button>
-            </form>
-          {% endif %}
+    {% if user.is_staff %}
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container py-1">
+          <span class="navbar-brand d-flex align-items-center">
+            <span class="brand-dot"></span>
+            <span class="fw-semibold">LedgerGuard</span>
+            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+          </span>
+
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMainCustomer">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div id="navMainCustomer" class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link" href="/ops/">Ops Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashboard:performance' %}">Model Performance Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/customer/">Customer Dashboard</a>
+              </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-white-50 small">Signed in as {{ user.username }}</span>
+              <form method="post" action="{% url 'logout' %}" class="mb-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
+              </form>
+            </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    {% else %}
+      <nav class="navbar navbar-light bg-white border-bottom">
+        <div class="container py-2">
+          {% if brand_link %}
+            <a class="navbar-brand d-flex align-items-center" href="/">
+              <span class="brand-dot"></span>
+              <span class="fw-semibold">LedgerGuard</span>
+              <span class="ms-2 small text-muted">Customer Dashboard</span>
+            </a>
+          {% else %}
+            <span class="navbar-brand d-flex align-items-center">
+              <span class="brand-dot"></span>
+              <span class="fw-semibold">LedgerGuard</span>
+              <span class="ms-2 small text-muted">Customer Dashboard</span>
+            </span>
+          {% endif %}
+          <div class="d-flex gap-2">
+            {% if user.is_authenticated %}
+              <form method="post" action="{% url 'customer:logout' %}" class="mb-0">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Sign out</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    {% endif %}
 
     <main class="container my-4">
       {% block content %}{% endblock %}

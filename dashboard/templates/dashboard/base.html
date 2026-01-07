@@ -32,11 +32,19 @@
     <!-- Section: primary navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container py-1">
-        <a class="navbar-brand d-flex align-items-center" href="/">
-          <span class="brand-dot"></span>
-          <span class="fw-semibold">LedgerGuard</span>
-          <span class="ms-2 small opacity-75">Neo-bank platform</span>
-        </a>
+        {% if brand_link %}
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            <span class="brand-dot"></span>
+            <span class="fw-semibold">LedgerGuard</span>
+            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+          </a>
+        {% else %}
+          <span class="navbar-brand d-flex align-items-center">
+            <span class="brand-dot"></span>
+            <span class="fw-semibold">LedgerGuard</span>
+            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+          </span>
+        {% endif %}
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
           <span class="navbar-toggler-icon"></span>
@@ -46,10 +54,13 @@
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             {% if user.is_authenticated and user.is_staff %}
               <li class="nav-item">
-                <a class="nav-link" href="/ops/">Ops dashboard</a>
+                <a class="nav-link" href="/ops/">Ops Dashboard</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'dashboard:performance' %}">Model Performance dashboard</a>
+                <a class="nav-link" href="{% url 'dashboard:performance' %}">Model Performance Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/customer/">Customer Dashboard</a>
               </li>
             {% endif %}
           </ul>

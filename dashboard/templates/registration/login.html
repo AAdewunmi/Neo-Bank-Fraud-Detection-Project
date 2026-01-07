@@ -12,7 +12,7 @@
         <!-- Section: sign-in copy -->
         <h1 class="h4 mb-2">Ops Sign In</h1>
         <p class="text-body-secondary mb-4">
-          Use an authorised staff account to access the Ops dashboard.
+          Use an authorised staff account to access the Ops Dashboard.
         </p>
 
         {% if form.non_field_errors %}
@@ -46,11 +46,6 @@
           <button class="btn btn-dark w-100" type="submit">Sign in</button>
         </form>
 
-        <!-- Section: secondary navigation -->
-        <div class="d-flex justify-content-between mt-3 small">
-          <a href="{% url 'public_home' %}">Back to home</a>
-          <a href="{% url 'dashboard:index' %}">Open Ops dashboard</a>
-        </div>
       </div>
     </div>
   </div>

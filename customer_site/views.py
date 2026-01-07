@@ -91,7 +91,11 @@ def customer_login(request: HttpRequest) -> HttpResponse:
             login(request, user)
             return redirect("customer:dashboard")
 
-    return render(request, "customer/login.html", {"form": form})
+    return render(
+        request,
+        "customer/login.html",
+        {"form": form, "brand_link": True},
+    )
 
 
 def customer_logout(request: HttpRequest) -> HttpResponse:
