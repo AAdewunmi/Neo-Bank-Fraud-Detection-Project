@@ -9,6 +9,9 @@ import os
 import re
 from typing import Any, Dict, List, Mapping
 
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -70,8 +73,35 @@ def _filter_customer_rows(rows: List[Mapping[str, Any]]) -> tuple[List[Dict[str,
     return filtered, dropped
 
 
-def home(request: HttpRequest) -> HttpResponse:
-    """Render the customer landing page."""
+def customer_login(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("customer:dashboard")
+
+    form = AuthenticationForm(request, data=request.POST or None)
+    form.fields["username"].widget.attrs.update({"class": "form-control"})
+    form.fields["password"].widget.attrs.update({"class": "form-control"})
+    if request.method == "POST" and form.is_valid():
+        user = form.get_user()
+        if user.is_staff:
+            form.add_error(
+                None,
+                "Staff accounts cannot sign in here. Use Ops sign in instead.",
+            )
+        else:
+            login(request, user)
+            return redirect("customer:dashboard")
+
+    return render(request, "customer/login.html", {"form": form})
+
+
+def customer_logout(request: HttpRequest) -> HttpResponse:
+    logout(request)
+    return redirect("public_home")
+
+
+@login_required(login_url="customer:login")
+def dashboard(request: HttpRequest) -> HttpResponse:
+    """Render the customer dashboard."""
     scored_run = load_scored_run(request.session)
     base_rows = scored_run.rows if scored_run else []
     run_meta = scored_run.run_meta if scored_run else {}
@@ -85,7 +115,7 @@ def home(request: HttpRequest) -> HttpResponse:
             "rows_shown": 0,
             "flags": flags,
         }
-        return render(request, "customer/home.html", context)
+        return render(request, "customer/dashboard.html", context)
 
     max_rows = int(os.environ.get("LEDGERGUARD_CUSTOMER_MAX_ROWS", "200"))
     edits = _get_category_edits(request.session)
@@ -107,14 +137,15 @@ def home(request: HttpRequest) -> HttpResponse:
             else None
         ),
     }
-    return render(request, "customer/home.html", context)
+    return render(request, "customer/dashboard.html", context)
 
 
 @require_POST
+@login_required(login_url="customer:login")
 def flag_transaction(request: HttpRequest) -> HttpResponse:
     row_id = str(request.POST.get("row_id", "")).strip().lower()
     if not _is_valid_row_id(row_id):
-        return redirect("customer:home")
+        return redirect("customer:dashboard")
 
     reason = str(request.POST.get("reason", "")).strip()
     if len(reason) > MAX_REASON_LENGTH:
@@ -122,13 +153,13 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
 
     scored_run = load_scored_run(request.session)
     if not scored_run or not scored_run.rows:
-        return redirect("customer:home")
+        return redirect("customer:dashboard")
 
     rows_with_ids = _ensure_row_ids(list(scored_run.rows))
     row_lookup = {str(r.get("row_id", "")).lower(): r for r in rows_with_ids}
     base = row_lookup.get(row_id)
     if base is None:
-        return redirect("customer:home")
+        return redirect("customer:dashboard")
 
     flags = _get_customer_flags(request.session)
     # Overwrite allowed so the latest customer note is captured.
@@ -144,9 +175,10 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
     }
     request.session[CUSTOMER_FLAGS_SESSION_KEY] = flags
     request.session.modified = True
-    return redirect("customer:home")
+    return redirect("customer:dashboard")
 
 
+@login_required(login_url="customer:login")
 def export_flags(request: HttpRequest) -> HttpResponse:
     flags = _get_customer_flags(request.session)
 

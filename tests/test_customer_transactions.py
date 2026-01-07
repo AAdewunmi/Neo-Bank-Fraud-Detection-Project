@@ -9,7 +9,10 @@ from dashboard.session_store import load_scored_run
 pytestmark = pytest.mark.django_db
 
 
-def test_customer_site_empty_state(client) -> None:
+def test_customer_site_empty_state(client, django_user_model) -> None:
+    user = django_user_model.objects.create_user(username="cust", password="pass1234")
+    client.force_login(user)
+
     resp = client.get("/customer/")
     assert resp.status_code == 200
     assert b"No transactions yet" in resp.content

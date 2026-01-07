@@ -15,8 +15,11 @@
           Use an authorised staff account to access the Ops dashboard.
         </p>
 
-        {% if form.errors %}
-          <!-- Feedback: authentication failure -->
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">
+            {{ form.non_field_errors|striptags }}
+          </div>
+        {% elif form.errors %}
           <div class="alert alert-danger" role="alert">
             Sign in failed. Check your username and password, then try again.
           </div>

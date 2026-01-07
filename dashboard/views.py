@@ -39,6 +39,8 @@ from typing import Any, Dict, List, Mapping
 
 import pandas as pd
 from django.conf import settings
+from django.contrib.auth import login
+from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -72,6 +74,28 @@ def public_home(request: HttpRequest) -> HttpResponse:
         Rendered public landing page.
     """
     return render(request, "dashboard/public_home.html")
+
+
+def ops_login(request: HttpRequest) -> HttpResponse:
+    """
+    Staff-only login for the Ops dashboard.
+    """
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect("dashboard:index")
+
+    form = AuthenticationForm(request, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.get_user()
+        if not user.is_staff:
+            form.add_error(
+                None,
+                "Customer accounts cannot sign in here. Use Customer sign in instead.",
+            )
+        else:
+            login(request, user)
+            return redirect("dashboard:index")
+
+    return render(request, "registration/login.html", {"form": form})
 
 
 @ops_access_required

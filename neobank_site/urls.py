@@ -22,6 +22,7 @@ urlpatterns = [
     path("ops/", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
 
     # Auth endpoints
+    path("accounts/login/", dashboard_views.ops_login, name="login"),
     path("accounts/", include("django.contrib.auth.urls")),
 
     # Admin site

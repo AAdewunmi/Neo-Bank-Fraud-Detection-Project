@@ -12,8 +12,15 @@ def test_customer_home_ok(client) -> None:
 
 
 def test_customer_site_ok(client) -> None:
-    """Customer site should be reachable without auth."""
+    """Customer dashboard should redirect to login without auth."""
     resp = client.get("/customer/")
+    assert resp.status_code == 302
+    assert "/customer/login/" in resp["Location"]
+
+
+def test_customer_login_ok(client) -> None:
+    """Customer login page should be reachable without auth."""
+    resp = client.get("/customer/login/")
     assert resp.status_code == 200
 
 
