@@ -1,0 +1,29 @@
+databases:
+  - name: ledgerguard-db
+    plan: free
+    databaseName: neobank
+    user: neobank
+
+services:
+  - type: web
+    name: ledgerguard
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ledgerguard-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "ledgerguard.onrender.com"
+      - key: HOST_ROUTING_ENABLED
+        value: "1"
+    dockerBuildArgs:
+      - key: COLLECTSTATIC
+        value: "1"
