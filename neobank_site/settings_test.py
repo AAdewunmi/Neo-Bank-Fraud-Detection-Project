@@ -20,6 +20,12 @@ for _name in dir(base):
 
 DEBUG = False
 HOST_ROUTING_ENABLED = False
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "ops.localhost",
+    "customer.localhost",
+]
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",

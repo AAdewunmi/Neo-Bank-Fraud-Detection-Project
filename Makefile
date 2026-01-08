@@ -23,7 +23,8 @@ test-env:
 
 test-docker:
 	docker compose up -d db web
-	docker compose exec web pytest -q
+	docker compose exec web coverage run -m pytest -q
+	docker compose exec web coverage report
 
 serve:
 	. .venv/bin/activate && python manage.py migrate && python manage.py runserver
