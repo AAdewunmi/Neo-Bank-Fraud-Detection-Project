@@ -69,6 +69,8 @@ class HostRoutingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if not settings.HOST_ROUTING_ENABLED:
+            return self.get_response(request)
         response = self._redirect_for_host(request)
         if response is not None:
             return response

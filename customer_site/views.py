@@ -255,9 +255,8 @@ def export_flags(request: HttpRequest) -> HttpResponse:
     if request.user.is_staff:
         flags = CustomerFlag.objects.all().order_by("row_id")
     else:
-        flags = CustomerFlag.objects.filter(
-            customer_id=request.user.username
-        ).order_by("row_id")
+        customer_id = _resolve_customer_id_for_user(request.user)
+        flags = CustomerFlag.objects.filter(customer_id=customer_id).order_by("row_id")
 
     buf = io.StringIO()
     writer = csv.writer(buf)

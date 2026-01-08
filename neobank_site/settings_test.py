@@ -19,6 +19,7 @@ for _name in dir(base):
 
 
 DEBUG = False
+HOST_ROUTING_ENABLED = False
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",

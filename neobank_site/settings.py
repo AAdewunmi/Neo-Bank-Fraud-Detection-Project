@@ -37,6 +37,7 @@ ALLOWED_HOSTS = os.environ.get(
 
 OPS_HOST = os.environ.get("OPS_HOST", "ops.localhost")
 CUSTOMER_HOST = os.environ.get("CUSTOMER_HOST", "customer.localhost")
+HOST_ROUTING_ENABLED = os.environ.get("HOST_ROUTING_ENABLED", "1") == "1"
 
 
 INSTALLED_APPS = [
