@@ -21,6 +21,20 @@ for _name in dir(base):
 DEBUG = False
 HOST_ROUTING_ENABLED = False
 WHITENOISE_ENABLED = False
+WHITENOISE_MANIFEST_STRICT = False
+
+# Force non-manifest static storage in tests to avoid missing file errors.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# Remove WhiteNoise middleware inherited from base settings if present.
+_middleware = list(globals().get("MIDDLEWARE", []))
+MIDDLEWARE = [
+    mw for mw in _middleware if mw != "whitenoise.middleware.WhiteNoiseMiddleware"]
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
