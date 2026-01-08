@@ -58,7 +58,7 @@ from dashboard.session_store import (
 )
 from customer_site.services import persist_scored_transactions
 from customer_site.models import CustomerTransaction
-from dashboard.models import OpsCategoryEdit
+from dashboard.models import CustomerDashboardSelection, OpsCategoryEdit
 from ml.training.utils import load_registry
 
 logger = logging.getLogger(__name__)
@@ -77,6 +77,19 @@ def public_home(request: HttpRequest) -> HttpResponse:
         Rendered public landing page.
     """
     return render(request, "dashboard/public_home.html")
+
+
+@require_POST
+@ops_access_required
+def select_customer_dashboard(request: HttpRequest) -> HttpResponse:
+    customer_id = str(request.POST.get("customer_id", "")).strip()
+    if customer_id:
+        CustomerDashboardSelection.objects.create(
+            customer_id=customer_id,
+            selected_at=timezone.now(),
+        )
+        return redirect("customer:dashboard")
+    return redirect("dashboard:index")
 
 
 def ops_login(request: HttpRequest) -> HttpResponse:

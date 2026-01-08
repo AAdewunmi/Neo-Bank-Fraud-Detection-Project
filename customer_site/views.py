@@ -7,13 +7,14 @@ import io
 import logging
 import os
 import re
-from typing import Any, Dict, List, Mapping
+from typing import Any, Dict, List, Mapping, Optional
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -29,9 +30,29 @@ SAFE_FIELDS_SET = set(SAFE_FIELDS)
 logger = logging.getLogger(__name__)
 
 
+def _get_selected_customer_id() -> Optional[str]:
+    from dashboard.models import CustomerDashboardSelection
+
+    try:
+        selection = (
+            CustomerDashboardSelection.objects.order_by("-selected_at")
+            .values_list("customer_id", flat=True)
+            .first()
+        )
+    except (ProgrammingError, OperationalError):
+        return None
+    if selection:
+        return selection.strip()
+    return None
+
+
 def _get_customer_flags(user) -> Dict[str, Dict[str, Any]]:
     if user.is_staff:
-        flags = CustomerFlag.objects.all()
+        selected = _get_selected_customer_id()
+        if selected:
+            flags = CustomerFlag.objects.filter(customer_id__iexact=selected)
+        else:
+            flags = CustomerFlag.objects.all()
     else:
         username = user.username.strip()
         flags = CustomerFlag.objects.filter(customer_id__iexact=username)
@@ -57,7 +78,11 @@ def _build_customer_rows(
 
 def _load_latest_transactions(user, max_rows: int) -> tuple[List[Dict[str, Any]], int]:
     if user.is_staff:
-        base_qs = CustomerTransaction.objects.all()
+        selected = _get_selected_customer_id()
+        if selected:
+            base_qs = CustomerTransaction.objects.filter(customer_id__iexact=selected)
+        else:
+            base_qs = CustomerTransaction.objects.all()
     else:
         username = user.username.strip()
         base_qs = CustomerTransaction.objects.filter(customer_id__iexact=username)

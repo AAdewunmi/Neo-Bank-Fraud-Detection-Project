@@ -104,6 +104,13 @@
               <a class="btn btn-outline-secondary w-50" href="{% url 'dashboard:index' %}">Reset</a>
             </div>
           </form>
+          <form method="post" action="{% url 'dashboard:select_customer_dashboard' %}" class="mt-3">
+            {% csrf_token %}
+            <input type="hidden" name="customer_id" value="{{ request.GET.customer_id|default:'' }}">
+            <button class="btn btn-primary w-100" type="submit" {% if not request.GET.customer_id %}disabled{% endif %}>
+              View Customer Dashboard
+            </button>
+          </form>
           <div class="text-muted small mt-2">
             Filters apply to the last scored run stored in session.
           </div>

@@ -16,6 +16,7 @@ urlpatterns = [
     path("performance/", views.performance, name="performance"),
     path("reset/", views.reset_run, name="reset_run"),
     path("edit/", views.apply_edit, name="apply_edit"),
+    path("customer/select/", views.select_customer_dashboard, name="select_customer_dashboard"),
     path("export/feedback/", views.export_feedback, name="export_feedback"),
 
     # Namespaced export endpoints (for {% url 'dashboard:...' %})
