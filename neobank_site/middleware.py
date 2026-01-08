@@ -32,10 +32,14 @@ class HostScopedCookieMiddleware:
         # Map host-scoped cookies to the default names expected by Django middleware.
         if session_cookie_name != settings.SESSION_COOKIE_NAME:
             if session_cookie_name in request.COOKIES:
-                request.COOKIES[settings.SESSION_COOKIE_NAME] = request.COOKIES[session_cookie_name]
+                request.COOKIES[settings.SESSION_COOKIE_NAME] = request.COOKIES[
+                    session_cookie_name
+                ]
         if csrf_cookie_name != settings.CSRF_COOKIE_NAME:
             if csrf_cookie_name in request.COOKIES:
-                request.COOKIES[settings.CSRF_COOKIE_NAME] = request.COOKIES[csrf_cookie_name]
+                request.COOKIES[settings.CSRF_COOKIE_NAME] = request.COOKIES[
+                    csrf_cookie_name
+                ]
 
         response = self.get_response(request)
 
@@ -82,7 +86,11 @@ class HostRoutingMiddleware:
         elif path.startswith("/customer"):
             if hostname.startswith("customer."):
                 return None
-            if hostname.startswith("ops.") and request.user.is_authenticated and request.user.is_staff:
+            if (
+                hostname.startswith("ops.")
+                and request.user.is_authenticated
+                and request.user.is_staff
+            ):
                 return None
             target = settings.CUSTOMER_HOST
         else:
