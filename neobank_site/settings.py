@@ -200,3 +200,21 @@ LOGOUT_REDIRECT_URL = os.environ.get("DJANGO_LOGOUT_REDIRECT_URL", "/")
 
 DASHBOARD_REQUIRE_LOGIN = os.environ.get("DASHBOARD_REQUIRE_LOGIN", "1") == "1"
 DASHBOARD_REQUIRE_STAFF = os.environ.get("DASHBOARD_REQUIRE_STAFF", "1") == "1"
+
+# Production toggles (Week 4).
+# Keeps local development friendly while making deploy settings explicit.
+if "DEBUG" in os.environ:
+    DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+
+if "ALLOWED_HOSTS" in os.environ:
+    ALLOWED_HOSTS = [
+        host.strip()
+        for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+        if host.strip()
+    ]
+
+if "STATIC_URL" in os.environ:
+    STATIC_URL = os.getenv("STATIC_URL", "static/")
+
+if "STATIC_ROOT" in os.environ:
+    STATIC_ROOT = Path(os.getenv("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
