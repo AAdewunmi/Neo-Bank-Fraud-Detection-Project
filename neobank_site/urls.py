@@ -1,11 +1,19 @@
 # neobank_site/urls.py
 """
 Project URL configuration.
+
+Includes a lightweight healthcheck route suitable for platform probes.
 """
 
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from dashboard import views as dashboard_views
+
+
+def health(_request):
+    """Healthcheck endpoint for liveness checks."""
+    return JsonResponse({"ok": True})
 
 urlpatterns = [
     # Public homepage
@@ -27,4 +35,7 @@ urlpatterns = [
 
     # Admin site
     path("admin/", admin.site.urls),
+
+    # Healthcheck
+    path("health/", health, name="health"),
 ]
