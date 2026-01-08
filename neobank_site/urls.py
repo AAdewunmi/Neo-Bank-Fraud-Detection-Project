@@ -15,6 +15,7 @@ def health(_request):
     """Healthcheck endpoint for liveness checks."""
     return JsonResponse({"ok": True})
 
+
 urlpatterns = [
     # Public homepage
     path("", dashboard_views.public_home, name="public_home"),
