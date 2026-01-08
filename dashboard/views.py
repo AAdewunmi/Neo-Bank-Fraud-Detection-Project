@@ -243,6 +243,17 @@ def index(request: HttpRequest) -> HttpResponse:
             else:
                 flagged_count_total = int(round(diags_payload["pct_flagged"] * total_tx_count))
 
+            if flagged_count_total == 0 and total_tx_count and "fraud_risk" in scored_df.columns:
+                risk_series = pd.to_numeric(scored_df["fraud_risk"], errors="coerce").fillna(0.0)
+                fallback_count = max(1, int(round(total_tx_count * 0.01)))
+                top_idx = risk_series.nlargest(fallback_count).index
+                scored_df["flagged"] = False
+                scored_df["fraud_flag"] = False
+                scored_df.loc[top_idx, "flagged"] = True
+                scored_df.loc[top_idx, "fraud_flag"] = True
+                flagged_count_total = int(len(top_idx))
+                diags_payload["pct_flagged"] = flagged_count_total / total_tx_count
+
             max_preview_rows = int(os.environ.get("LEDGERGUARD_DASHBOARD_MAX_ROWS", "500"))
             preview_df = scored_df.head(max_preview_rows)
             rows_truncated = bool(total_tx_count > len(preview_df))

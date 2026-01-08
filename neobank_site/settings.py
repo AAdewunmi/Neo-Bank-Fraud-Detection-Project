@@ -35,6 +35,9 @@ ALLOWED_HOSTS = os.environ.get(
     "localhost,127.0.0.1,ops.localhost,customer.localhost",
 ).split(",")
 
+OPS_HOST = os.environ.get("OPS_HOST", "ops.localhost")
+CUSTOMER_HOST = os.environ.get("CUSTOMER_HOST", "customer.localhost")
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -54,6 +57,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "neobank_site.middleware.HostRoutingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
