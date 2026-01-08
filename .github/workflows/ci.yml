@@ -69,6 +69,11 @@ jobs:
         run: |
           flake8 .
 
+      - name: Collect static
+        if: env.WHITENOISE_ENABLED == '1'
+        run: |
+          python manage.py collectstatic --noinput
+
       - name: Tests (coverage gate)
         run: |
           coverage run -m pytest -q \
