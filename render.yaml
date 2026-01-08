@@ -11,6 +11,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    postDeployCommand: python manage.py migrate
     envVars:
       - key: DATABASE_URL
         fromDatabase:
