@@ -20,6 +20,7 @@ for _name in dir(base):
 
 DEBUG = False
 HOST_ROUTING_ENABLED = False
+WHITENOISE_ENABLED = False
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",

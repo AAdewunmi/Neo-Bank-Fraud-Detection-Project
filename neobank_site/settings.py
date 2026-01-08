@@ -51,10 +51,15 @@ INSTALLED_APPS = [
     "customer_site",
 ]
 
+WHITENOISE_ENABLED = os.environ.get("WHITENOISE_ENABLED", "1") == "1"
+
 MIDDLEWARE = [
     "neobank_site.middleware.HostScopedCookieMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+]
+if WHITENOISE_ENABLED:
+    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE += [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -188,12 +193,13 @@ _artefacts_dir = BASE_DIR / "artefacts"
 if _artefacts_dir.exists():
     STATICFILES_DIRS.append(("artefacts", _artefacts_dir))
 
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
-    },
-}
+if WHITENOISE_ENABLED:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        },
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
