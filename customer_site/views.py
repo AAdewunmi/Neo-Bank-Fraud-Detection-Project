@@ -20,7 +20,7 @@ from django.views.decorators.http import require_POST
 
 from dashboard.views import _get_category_edits, _overlay_category_edits
 from customer_site.models import CustomerFlag, CustomerTransaction
-from customer_site.services import build_spend_summary
+from customer_site.services import build_spend_summary, normalize_customer_id
 
 SAFE_FIELDS = ("row_id", "timestamp", "merchant", "description", "amount", "category")
 MAX_REASON_LENGTH = 200
@@ -42,20 +42,24 @@ def _get_selected_customer_id() -> Optional[str]:
     except (ProgrammingError, OperationalError):
         return None
     if selection:
-        return selection.strip()
+        return normalize_customer_id(selection)
     return None
+
+
+def _resolve_customer_id_for_user(user) -> str:
+    return normalize_customer_id(user.username)
 
 
 def _get_customer_flags(user) -> Dict[str, Dict[str, Any]]:
     if user.is_staff:
         selected = _get_selected_customer_id()
         if selected:
-            flags = CustomerFlag.objects.filter(customer_id__iexact=selected)
+            flags = CustomerFlag.objects.filter(customer_id=selected)
         else:
             flags = CustomerFlag.objects.all()
     else:
-        username = user.username.strip()
-        flags = CustomerFlag.objects.filter(customer_id__iexact=username)
+        customer_id = _resolve_customer_id_for_user(user)
+        flags = CustomerFlag.objects.filter(customer_id=customer_id)
     return {f.row_id: {"row_id": f.row_id, "reason": f.reason} for f in flags}
 
 
@@ -80,12 +84,12 @@ def _load_latest_transactions(user, max_rows: int) -> tuple[List[Dict[str, Any]]
     if user.is_staff:
         selected = _get_selected_customer_id()
         if selected:
-            base_qs = CustomerTransaction.objects.filter(customer_id__iexact=selected)
+            base_qs = CustomerTransaction.objects.filter(customer_id=selected)
         else:
             base_qs = CustomerTransaction.objects.all()
     else:
-        username = user.username.strip()
-        base_qs = CustomerTransaction.objects.filter(customer_id__iexact=username)
+        customer_id = _resolve_customer_id_for_user(user)
+        base_qs = CustomerTransaction.objects.filter(customer_id=customer_id)
 
     latest_scored_at = (
         base_qs.order_by("-scored_at").values_list("scored_at", flat=True).first()
@@ -216,10 +220,10 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
             "description",
         ).first()
     else:
-        username = request.user.username.strip()
+        customer_id = _resolve_customer_id_for_user(request.user)
         base = CustomerTransaction.objects.filter(
             row_id=row_id,
-            customer_id__iexact=username,
+            customer_id=customer_id,
         ).values(
             "row_id",
             "timestamp",

@@ -56,7 +56,7 @@ from dashboard.session_store import (
     load_scored_run,
     save_scored_run,
 )
-from customer_site.services import persist_scored_transactions
+from customer_site.services import normalize_customer_id, persist_scored_transactions
 from customer_site.models import CustomerTransaction
 from dashboard.models import CustomerDashboardSelection, OpsCategoryEdit
 from ml.training.utils import load_registry
@@ -82,7 +82,7 @@ def public_home(request: HttpRequest) -> HttpResponse:
 @require_POST
 @ops_access_required
 def select_customer_dashboard(request: HttpRequest) -> HttpResponse:
-    customer_id = str(request.POST.get("customer_id", "")).strip()
+    customer_id = normalize_customer_id(request.POST.get("customer_id", ""))
     if customer_id:
         CustomerDashboardSelection.objects.create(
             customer_id=customer_id,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+import re
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
 
@@ -82,6 +83,20 @@ def build_spend_summary(
     }
 
 
+def normalize_customer_id(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+
+    lower = text.lower()
+    for pattern in (r"^customer(\d+)$", r"^c(\d+)$"):
+        match = re.match(pattern, lower)
+        if match:
+            return f"C{int(match.group(1)):04d}"
+
+    return text.upper()
+
+
 def persist_scored_transactions(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -98,7 +113,7 @@ def persist_scored_transactions(
         records.append(
             CustomerTransaction(
                 row_id=row_id,
-                customer_id=str(row.get("customer_id", "")),
+                customer_id=normalize_customer_id(row.get("customer_id", "")),
                 timestamp=str(row.get("timestamp", "")),
                 amount=str(row.get("amount", "")),
                 merchant=str(row.get("merchant", "")),
