@@ -50,7 +50,13 @@ RUN mkdir -p /app/cache/huggingface && \
       python -m ml.scripts.preload_encoder; \
     fi
 
+# Collect static assets for production deploys.
+ARG COLLECTSTATIC=0
+RUN if [ "$COLLECTSTATIC" = "1" ]; then \
+      python manage.py collectstatic --noinput; \
+    fi
+
 EXPOSE 8000
 
 # docker-compose.yml can override this CMD
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "neobank_site.wsgi:application", "--bind", "0.0.0.0:8000"]
