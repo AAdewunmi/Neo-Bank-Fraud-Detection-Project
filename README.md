@@ -7,15 +7,6 @@
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 
-You’re right to call that out. A README is a **single full artefact**, not snippets, so the correct move here is to **regenerate the entire file cleanly**, incorporating the changes end to end. Below is a **fully regenerated README** with:
-
-* More neutral, factual deployment wording
-* A short, concrete Railway deploy appendix
-* A one-line roadmap note about public deployment
-* No meta commentary, no justification language, no portfolio signalling
-
-You can replace your current README with this verbatim.
-
 ---
 
 ```markdown
