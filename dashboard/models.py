@@ -18,3 +18,11 @@ class OpsCategoryEdit(models.Model):
 
     def __str__(self) -> str:
         return f"{self.row_id}:{self.new_category}"
+
+
+class CustomerDashboardSelection(models.Model):
+    customer_id = models.CharField(max_length=64)
+    selected_at = models.DateTimeField()
+
+    def __str__(self) -> str:
+        return f"{self.customer_id}:{self.selected_at.isoformat()}"

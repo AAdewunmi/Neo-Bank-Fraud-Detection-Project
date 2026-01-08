@@ -33,7 +33,8 @@ def _get_customer_flags(user) -> Dict[str, Dict[str, Any]]:
     if user.is_staff:
         flags = CustomerFlag.objects.all()
     else:
-        flags = CustomerFlag.objects.filter(customer_id=user.username)
+        username = user.username.strip()
+        flags = CustomerFlag.objects.filter(customer_id__iexact=username)
     return {f.row_id: {"row_id": f.row_id, "reason": f.reason} for f in flags}
 
 
@@ -58,7 +59,8 @@ def _load_latest_transactions(user, max_rows: int) -> tuple[List[Dict[str, Any]]
     if user.is_staff:
         base_qs = CustomerTransaction.objects.all()
     else:
-        base_qs = CustomerTransaction.objects.filter(customer_id=user.username)
+        username = user.username.strip()
+        base_qs = CustomerTransaction.objects.filter(customer_id__iexact=username)
 
     latest_scored_at = (
         base_qs.order_by("-scored_at").values_list("scored_at", flat=True).first()
@@ -189,9 +191,10 @@ def flag_transaction(request: HttpRequest) -> HttpResponse:
             "description",
         ).first()
     else:
+        username = request.user.username.strip()
         base = CustomerTransaction.objects.filter(
             row_id=row_id,
-            customer_id=request.user.username,
+            customer_id__iexact=username,
         ).values(
             "row_id",
             "timestamp",
