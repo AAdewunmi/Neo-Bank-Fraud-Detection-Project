@@ -10,7 +10,7 @@
 
 ## LedgerGuard
 
-LedgerGuard is a production-minded fraud detection and transaction categorisation system built around a neo-bank use case. It provides an Ops Dashboard for ingestion, scoring, review, and feedback, alongside a read-only Customer Dashboard for safe end-user visibility.
+LedgerGuard is a production-minded fraud detection and transaction categorisation system for a neo-bank setting, delivering an end-to-end ML pipeline that auto-labels merchant transactions and assigns a fraud risk score, surfaced through an Ops Dashboard for ingestion, scoring, review, and feedback, alongside a read-only Customer Dashboard for safe end-user visibility.
 
 ## Highlights
 
@@ -66,7 +66,7 @@ Use demo data: `data/sample_transactions.csv`
 
 ## Screens and Docs
 
-- Screenshots and notes: `docs/`
+- Screenshots and notes: `docs/screenshots`
 - Model registry: `model_registry.json`
 - Rules configuration: `rules/category_overrides.json`
 
