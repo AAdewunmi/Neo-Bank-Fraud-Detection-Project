@@ -23,16 +23,22 @@
         margin-right: 8px;
       }
       .soft-panel { background: #eef2ff; border: 1px solid #e2e8f0; }
+      .customer-navbar .navbar-brand { color: #ffffff; }
+      .customer-navbar .navbar-brand .small { color: #ffffff; }
+      .customer-navbar .nav-link { color: #ffffff; }
+      .customer-navbar .nav-link:hover,
+      .customer-navbar .nav-link:focus { color: #ffffff; }
+      .customer-navbar .signed-in { color: #ffffff; }
     </style>
   </head>
   <body>
     {% if user.is_staff %}
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark customer-navbar">
         <div class="container py-1">
           <span class="navbar-brand d-flex align-items-center">
             <span class="brand-dot"></span>
             <span class="fw-semibold">LedgerGuard</span>
-            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+            <span class="ms-2 small opacity-75">Neo-bank Fraud and Transaction Categorisation System</span>
           </span>
 
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMainCustomer">
@@ -53,33 +59,33 @@
             </ul>
 
             <div class="d-flex align-items-center gap-2">
-              <span class="text-white-50 small">Signed in as {{ user.username }}</span>
+              <span class="signed-in small">Signed in as {{ user.username }}</span>
             </div>
           </div>
         </div>
       </nav>
     {% else %}
-      <nav class="navbar navbar-light bg-white border-bottom">
-        <div class="container py-2">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark customer-navbar">
+        <div class="container py-1">
           {% if brand_link %}
             <a class="navbar-brand d-flex align-items-center" href="/">
               <span class="brand-dot"></span>
               <span class="fw-semibold">LedgerGuard</span>
-              <span class="ms-2 small text-muted">Customer Dashboard</span>
+              <span class="ms-2 small opacity-75">Neo-bank Fraud and Transaction Categorisation System</span>
             </a>
           {% else %}
             <span class="navbar-brand d-flex align-items-center">
               <span class="brand-dot"></span>
               <span class="fw-semibold">LedgerGuard</span>
-              <span class="ms-2 small text-muted">Customer Dashboard</span>
+              <span class="ms-2 small opacity-75">Neo-bank Fraud and Transaction Categorisation System</span>
             </span>
           {% endif %}
-          <div class="d-flex gap-2">
+          <div class="d-flex align-items-center gap-2 ms-auto">
             {% if user.is_authenticated %}
-              <span class="text-muted small align-self-center">Signed in as {{ user.username }}</span>
+              <span class="signed-in small">Signed in as {{ user.username }}</span>
               <form method="post" action="{% url 'customer:logout' %}" class="mb-0">
                 {% csrf_token %}
-                <button class="btn btn-sm btn-outline-secondary" type="submit">Sign out</button>
+                <button class="btn btn-sm btn-outline-light" type="submit">Sign out</button>
               </form>
             {% endif %}
           </div>

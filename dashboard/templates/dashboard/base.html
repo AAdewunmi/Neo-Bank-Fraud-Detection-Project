@@ -25,24 +25,30 @@
         background: #ef4444;
         margin-right: 8px;
       }
+      .ops-navbar .navbar-brand { color: #ffffff; }
+      .ops-navbar .navbar-brand .small { color: #ffffff; }
+      .ops-navbar .nav-link { color: #ffffff; }
+      .ops-navbar .nav-link:hover,
+      .ops-navbar .nav-link:focus { color: #ffffff; }
+      .ops-navbar .signed-in { color: #ffffff; }
     </style>
   </head>
 
   <body>
     <!-- Section: primary navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container py-1">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark ops-navbar">
+      <div class="container-fluid py-1 px-4">
         {% if brand_link %}
           <a class="navbar-brand d-flex align-items-center" href="/">
             <span class="brand-dot"></span>
             <span class="fw-semibold">LedgerGuard</span>
-            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+            <span class="ms-2 small opacity-75">Neo-bank Fraud and Transaction Categorisation System</span>
           </a>
         {% else %}
           <span class="navbar-brand d-flex align-items-center">
             <span class="brand-dot"></span>
             <span class="fw-semibold">LedgerGuard</span>
-            <span class="ms-2 small opacity-75">Neo-bank platform</span>
+            <span class="ms-2 small opacity-75">Neo-bank Fraud and Transaction Categorisation System</span>
           </span>
         {% endif %}
 
@@ -68,7 +74,7 @@
           <div class="d-flex align-items-center gap-2">
             <!-- Component: auth affordances -->
             {% if user.is_authenticated %}
-              <span class="text-white-50 small">Signed in as {{ user.username }}</span>
+              <span class="signed-in small">Signed in as {{ user.username }}</span>
               <form method="post" action="{% url 'logout' %}" class="mb-0">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
