@@ -6,7 +6,7 @@
 [![Docker Compose](https://img.shields.io/badge/docker%20compose-supported-2496ED)](https://docs.docker.com/compose/)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-# Neo-bank Fraud and Transaction Categorisation System 
+# Neo-bank Fraud Detection and Transaction Categorisation System 
 
 ## LedgerGuard
 
