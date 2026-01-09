@@ -6,7 +6,9 @@
 [![Docker Compose](https://img.shields.io/badge/docker%20compose-supported-2496ED)](https://docs.docker.com/compose/)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-# LedgerGuard (Neo-Bank Fraud Detection Project)
+# Neo-bank Fraud and Transaction Categorisation System 
+
+## LedgerGuard
 
 LedgerGuard is a production-minded fraud detection and transaction categorisation system built around a neo-bank use case. It provides an Ops Dashboard for ingestion, scoring, review, and feedback, alongside a read-only Customer Dashboard for safe end-user visibility.
 
