@@ -25,6 +25,22 @@ LedgerGuard is a production-minded fraud detection and transaction categorisatio
 - Model performance page powered by `model_registry.json`
 - Docker-ready deployment with healthcheck endpoint
 
+## Technologies Used
+
+- Language: Python 3.11
+- Web framework: Django 5 (Django Templates for server-rendered UI)
+- Frontend: HTML, CSS, Vanilla JavaScript
+- API tooling dependency: Django REST Framework
+- Database: PostgreSQL
+- Data and ML: pandas, NumPy, scikit-learn, imbalanced-learn
+- Advanced modeling: XGBoost, LightGBM
+- NLP/Embeddings: sentence-transformers, transformers, PyTorch
+- Model/runtime utilities: joblib, gunicorn, WhiteNoise, python-dotenv
+- Visualisation: Matplotlib, Seaborn
+- Testing: pytest, pytest-django, factory_boy, coverage/pytest-cov
+- Code quality: Black, isort, Flake8, mypy, pre-commit
+- DevOps/Deployment: Docker, Docker Compose, Render, GitHub Actions (CI)
+
 ## Quick Start
 
 1. Install dependencies and set env vars:
