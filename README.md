@@ -96,6 +96,36 @@ Use demo data: `data/sample_transactions.csv`
 - `data/` Sample datasets
 - `tests/` Unit and integration-style tests
 
+## Repository Structure
+
+```text
+Neo-Bank-Fraud-Detection-Project/
+├── dashboard/               # Ops dashboard app (views, services, templates, static assets)
+├── customer_site/           # Customer-facing app (read-only dashboard and auth views)
+├── neobank_site/            # Django project config (settings, URLs, WSGI/ASGI)
+├── ml/
+│   ├── inference/           # Scoring and prediction entry points
+│   ├── training/            # Model training pipelines and utilities
+│   ├── metrics/             # Metrics rendering and plotting helpers
+│   ├── scripts/             # ML operational scripts (state refresh, preload)
+│   └── reporting/           # Reporting/visualisation helpers
+├── tests/                   # Unit/integration tests
+├── docs/                    # Project docs, model cards, screenshots
+├── data/                    # Sample input datasets
+├── artefacts/               # Trained model artefacts
+├── reports/                 # Metrics and threshold outputs
+├── rules/                   # Rule-based category override config
+├── requirements/            # Split requirement files (base/dev/ml/all)
+├── scripts/                 # Utility scripts (e.g., registry validation)
+├── docker-compose.yml       # Local multi-service orchestration
+├── Dockerfile               # Production image build
+├── manage.py                # Django management entry point
+├── model_registry.json      # Model run metadata and registry
+├── pyproject.toml           # Project tooling configuration
+├── pytest.ini               # Pytest configuration
+└── render.yaml              # Render deployment configuration
+```
+
 ## Data Contract
 
 Expected CSV columns:
