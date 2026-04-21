@@ -13,7 +13,7 @@ matplotlib==3.9.2
 pytest==9.0.3
 pytest-django==4.8.0
 factory_boy==3.3.0
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 psycopg2-binary==2.9.9
 whitenoise==6.7.0
 flake8==7.1.1
