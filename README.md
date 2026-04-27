@@ -82,6 +82,8 @@ Use demo data: `data/sample_transactions.csv`
 
 ## Screens and Docs
 
+<img width="800" height="376" alt="Image" src="https://github.com/user-attachments/assets/3b6c9936-ac3b-4fba-9686-8e9461f80da3" />
+
 - Screenshots and notes: `docs/screenshots`
 - Model registry: `model_registry.json`
 - Rules configuration: `rules/category_overrides.json`
